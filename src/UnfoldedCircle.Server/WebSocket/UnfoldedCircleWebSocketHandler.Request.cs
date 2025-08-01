@@ -297,8 +297,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                             RemoteCommands.CursorRight, RemoteCommands.CursorEnter, RemoteCommands.VolumeUp,
                             RemoteCommands.VolumeDown, RemoteCommands.MuteToggle, RemoteCommands.Info,
                             RemoteCommands.ChannelUp, RemoteCommands.ChannelDown, RemoteCommands.Settings,
-                            RemoteCommands.InputHDMI1, RemoteCommands.InputHDMI2, RemoteCommands.InputHDMI3,
-                            RemoteCommands.InputHDMI4
+                            RemoteCommands.InputHdmi1, RemoteCommands.InputHdmi2, RemoteCommands.InputHdmi3,
+                            RemoteCommands.InputHdmi4
                         ],
                         UserInterface = new UserInterface
                         {
@@ -315,7 +315,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                                         {
                                             Type = UserInterfaceItemType.Text,
                                             Text = "HDMI 1",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHDMI1 },
+                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi1 },
                                             Location = new GridLocation { X = 0, Y = 0 },
                                             Size = new GridItemSize { Height = 1, Width = 1 }
                                         },
@@ -323,7 +323,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                                         {
                                             Type = UserInterfaceItemType.Text,
                                             Text = "HDMI 2",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHDMI2 },
+                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi2 },
                                             Location = new GridLocation { X = 1, Y = 0 },
                                             Size = new GridItemSize { Height = 1, Width = 1 }
                                         },
@@ -331,7 +331,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                                         {
                                             Type = UserInterfaceItemType.Text,
                                             Text = "HDMI 3",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHDMI3 },
+                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi3 },
                                             Location = new GridLocation { X = 0, Y = 1 },
                                             Size = new GridItemSize { Height = 1, Width = 1 }
                                         },
@@ -339,7 +339,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                                         {
                                             Type = UserInterfaceItemType.Text,
                                             Text = "HDMI 4",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHDMI4 },
+                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi4 },
                                             Location = new GridLocation { X = 1, Y = 1 },
                                             Size = new GridItemSize { Height = 1, Width = 1 }
                                         },

@@ -222,10 +222,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             _ when command.Equals(RemoteCommands.Info, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Info,
             _ when command.Equals(RemoteButtons.Back, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Back,
             _ when command.Equals(RemoteCommands.Settings, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Settings,
-            _ when command.Equals(RemoteCommands.InputHDMI1, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.HDMI1,
-            _ when command.Equals(RemoteCommands.InputHDMI2, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.HDMI2,
-            _ when command.Equals(RemoteCommands.InputHDMI3, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.HDMI3,
-            _ when command.Equals(RemoteCommands.InputHDMI4, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.HDMI4,
+            _ when command.Equals(RemoteCommands.InputHdmi1, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Hdmi1,
+            _ when command.Equals(RemoteCommands.InputHdmi2, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Hdmi2,
+            _ when command.Equals(RemoteCommands.InputHdmi3, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Hdmi3,
+            _ when command.Equals(RemoteCommands.InputHdmi4, StringComparison.OrdinalIgnoreCase) => FireTV.FireTvConstants.Hdmi4,
             _ => command
         };
     }

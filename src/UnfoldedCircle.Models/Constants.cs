@@ -26,10 +26,10 @@ public static class RemoteCommands
     public const string ChannelUp = "CHANNEL_UP";
     public const string ChannelDown = "CHANNEL_DOWN";
     public const string Settings = "SETTINGS";
-    public const string InputHDMI1 = "INPUT_HDMI1";
-    public const string InputHDMI2 = "INPUT_HDMI2";
-    public const string InputHDMI3 = "INPUT_HDMI3";
-    public const string InputHDMI4 = "INPUT_HDMI4";
+    public const string InputHdmi1 = "INPUT_HDMI1";
+    public const string InputHdmi2 = "INPUT_HDMI2";
+    public const string InputHdmi3 = "INPUT_HDMI3";
+    public const string InputHdmi4 = "INPUT_HDMI4";
 }
 
 public static class RemoteButtons

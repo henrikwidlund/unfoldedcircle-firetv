@@ -29,8 +29,8 @@ public static class FireTvConstants
     public const string Settings = "176";
     public const string Sleep = "223";
     public const string Wakeup = "224";
-    public const string HDMI1 = "243";
-    public const string HDMI2 = "244";
-    public const string HDMI3 = "245";
-    public const string HDMI4 = "246";
+    public const string Hdmi1 = "243";
+    public const string Hdmi2 = "244";
+    public const string Hdmi3 = "245";
+    public const string Hdmi4 = "246";
 }

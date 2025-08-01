@@ -66,7 +66,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 {
                     _ = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.EnterStandbyEvent)!;
                     await (cancellationTokenWrapper.GetCurrentBroadcastCancellationTokenSource()?.CancelAsync() ?? Task.CompletedTask);
-                    _fireTVClientFactory.RemoveAllClients();
+                    _fireTvClientFactory.RemoveAllClients();
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateConnectEventResponsePayload(DeviceState.Disconnected, _unfoldedCircleJsonSerializerContext),
                         wsId,

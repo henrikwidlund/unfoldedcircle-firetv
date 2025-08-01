@@ -42,15 +42,15 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         if (fireTvClientKey is null)
             return null;
         
-        var deviceClient = await _fireTVClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
+        var deviceClient = await _fireTvClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
         if (deviceClient is null)
             return null;
 
         if (deviceClient.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
             return new FireTvClientHolder(deviceClient, fireTvClientKey.Value);
 
-        _fireTVClientFactory.TryRemoveClient(fireTvClientKey.Value);
-        deviceClient = await _fireTVClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
+        _fireTvClientFactory.TryRemoveClient(fireTvClientKey.Value);
+        deviceClient = await _fireTvClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
 
         return deviceClient is null ? null : new FireTvClientHolder(deviceClient, fireTvClientKey.Value);
     }
@@ -84,7 +84,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         if (fireTvClientKey is null)
             return false;
         
-        _fireTVClientFactory.TryRemoveClient(fireTvClientKey.Value);
+        _fireTvClientFactory.TryRemoveClient(fireTvClientKey.Value);
         return true;
     }
     

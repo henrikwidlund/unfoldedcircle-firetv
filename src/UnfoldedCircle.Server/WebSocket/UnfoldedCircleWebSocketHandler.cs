@@ -17,7 +17,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler(
 {
     private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;
     private readonly IConfigurationService _configurationService = configurationService;
-    private readonly FireTvClientFactory _fireTVClientFactory = fireTVClientFactory;
+    private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;
     private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;
 
     public async Task<WebSocketReceiveResult> HandleWebSocketAsync(
