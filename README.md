@@ -22,6 +22,8 @@ This is a limitation of the ADB protocol, where it is not possible to query the 
 
 ### Prerequisites
 - IP and MAC address of the Fire TV
+- When installing on the remote, the remote must be on firmware version 2.6.3 or later or the driver will crash
+because it can't start adb.
 
 ### Running
 
