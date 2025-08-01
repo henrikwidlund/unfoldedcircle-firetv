@@ -73240,7 +73240,7 @@
       "versionControlProvenance": [
         {
           "repositoryUri": "https://github.com/henrikwidlund/unfoldedcircle-firetv.git",
-          "revisionId": "142fb2edb531848f2029cbdf4928a81322b90929",
+          "revisionId": "88dd484e248cc178af359e4a526a082b798f12a3",
           "branch": "main",
           "properties": {
             "repoUrl": "https://github.com/henrikwidlund/unfoldedcircle-firetv.git",
@@ -73597,13 +73597,6 @@
         },
         {
           "location": {
-            "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
-            "uriBaseId": "solutionDir"
-          },
-          "hashes": {}
-        },
-        {
-          "location": {
             "uri": "src/Dns/AddressRecord.cs",
             "uriBaseId": "solutionDir"
           },
@@ -73745,6 +73738,13 @@
         {
           "location": {
             "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleMiddleware.cs",
+            "uriBaseId": "solutionDir"
+          },
+          "hashes": {}
+        },
+        {
+          "location": {
+            "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -82825,7 +82825,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/AddressRecord.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 50
+                  "index": 49
                 },
                 "region": {
                   "startLine": 17,
@@ -83037,7 +83037,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DnsObject.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 51
+                  "index": 50
                 },
                 "region": {
                   "startLine": 21,
@@ -83408,7 +83408,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/ConcurrentSet.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 51
                 },
                 "region": {
                   "startLine": 102,
@@ -83461,7 +83461,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdateResourceList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 53
+                  "index": 52
                 },
                 "region": {
                   "startLine": 114,
@@ -83514,7 +83514,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/NameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 54
+                  "index": 53
                 },
                 "region": {
                   "startLine": 136,
@@ -83567,7 +83567,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/ConcurrentSet.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 51
                 },
                 "region": {
                   "startLine": 155,
@@ -83726,7 +83726,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DomainName.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 55
+                  "index": 54
                 },
                 "region": {
                   "startLine": 315,
@@ -83779,7 +83779,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 34,
@@ -83832,7 +83832,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 129,
@@ -83885,7 +83885,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/CachedNameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 56
                 },
                 "region": {
                   "startLine": 18,
@@ -83991,7 +83991,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DnsObject.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 51
+                  "index": 50
                 },
                 "region": {
                   "startLine": 102,
@@ -84097,7 +84097,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsOptionRegistry%20.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 58
+                  "index": 57
                 },
                 "region": {
                   "startLine": 36,
@@ -84150,7 +84150,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/NameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 54
+                  "index": 53
                 },
                 "region": {
                   "startLine": 87,
@@ -84203,7 +84203,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DnsObject.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 51
+                  "index": 50
                 },
                 "region": {
                   "startLine": 126,
@@ -84838,7 +84838,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UnknownRecord.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 60
+                  "index": 59
                 },
                 "region": {
                   "startLine": 11,
@@ -84997,7 +84997,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsErrorOption.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 60
                 },
                 "region": {
                   "startLine": 26,
@@ -86958,7 +86958,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsPaddingOption.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 62
+                  "index": 61
                 },
                 "region": {
                   "startLine": 25,
@@ -88177,7 +88177,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsErrorOption.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 61
+                  "index": 60
                 },
                 "region": {
                   "startLine": 31,
@@ -88336,7 +88336,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsKeepaliveOption.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 63
+                  "index": 62
                 },
                 "region": {
                   "startLine": 28,
@@ -88760,7 +88760,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DnsObject.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 51
+                  "index": 50
                 },
                 "region": {
                   "startLine": 29,
@@ -88919,7 +88919,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/EdnsOption.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 64
+                  "index": 63
                 },
                 "region": {
                   "startLine": 27,
@@ -89025,7 +89025,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/NameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 54
+                  "index": 53
                 },
                 "region": {
                   "startLine": 15,
@@ -89078,7 +89078,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/NameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 54
+                  "index": 53
                 },
                 "region": {
                   "startLine": 29,
@@ -89131,7 +89131,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/Node.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 65
+                  "index": 64
                 },
                 "region": {
                   "startLine": 22,
@@ -89184,7 +89184,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/Node.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 65
+                  "index": 64
                 },
                 "region": {
                   "startLine": 36,
@@ -89237,7 +89237,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/SecurityAlgorithmRegistry.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 66
+                  "index": 65
                 },
                 "region": {
                   "startLine": 23,
@@ -89290,7 +89290,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/SecurityAlgorithmRegistry.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 66
+                  "index": 65
                 },
                 "region": {
                   "startLine": 28,
@@ -89396,7 +89396,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DigestRegistry.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 67
+                  "index": 66
                 },
                 "region": {
                   "startLine": 46,
@@ -89502,7 +89502,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.FireTV/FireTVClientFactory.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 68
+                  "index": 67
                 },
                 "region": {
                   "startLine": 12,
@@ -90403,7 +90403,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/ConcurrentSet.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 51
                 },
                 "region": {
                   "startLine": 51,
@@ -93424,7 +93424,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/CachedNameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 56
                 },
                 "region": {
                   "startLine": 69,
@@ -93477,7 +93477,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdateResourceList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 53
+                  "index": 52
                 },
                 "region": {
                   "startLine": 33,
@@ -93794,7 +93794,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdateResourceList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 53
+                  "index": 52
                 },
                 "region": {
                   "startLine": 58,
@@ -93847,7 +93847,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdateResourceList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 53
+                  "index": 52
                 },
                 "region": {
                   "startLine": 83,
@@ -93900,7 +93900,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdateResourceList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 53
+                  "index": 52
                 },
                 "region": {
                   "startLine": 147,
@@ -94218,7 +94218,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 64,
@@ -94271,7 +94271,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 86,
@@ -94324,7 +94324,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 104,
@@ -94377,7 +94377,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 157,
@@ -94430,7 +94430,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/UpdatePrerequisiteList.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 56
+                  "index": 55
                 },
                 "region": {
                   "startLine": 179,
@@ -94589,7 +94589,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/CachedNameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 56
                 },
                 "region": {
                   "startLine": 40,
@@ -94907,7 +94907,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/DnsObject.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 51
+                  "index": 50
                 },
                 "region": {
                   "startLine": 76,
@@ -95172,7 +95172,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/ConcurrentSet.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 51
                 },
                 "region": {
                   "startLine": 145,
@@ -95543,7 +95543,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/ConcurrentSet.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 52
+                  "index": 51
                 },
                 "region": {
                   "startLine": 74,
@@ -97398,7 +97398,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/NameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 54
+                  "index": 53
                 },
                 "region": {
                   "startLine": 87,
@@ -97504,7 +97504,7 @@
                 "artifactLocation": {
                   "uri": "src/Dns/Resolving/CachedNameServer.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 57
+                  "index": 56
                 },
                 "region": {
                   "startLine": 6,
@@ -97716,7 +97716,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/Configuration/ConfigurationService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 69
+                  "index": 68
                 },
                 "region": {
                   "startLine": 9,
@@ -97746,7 +97746,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "A3157BE89E64EC07AEED1BB4914A48754A9A655BF7D1457B15E1AA9742E716E7"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -97769,7 +97769,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/Configuration/ConfigurationService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 69
+                  "index": 68
                 },
                 "region": {
                   "startLine": 10,
@@ -97799,7 +97799,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "CED0930706DE451F11228BB00314139BA77A8FF239DB922B41E63EFB2059BB4B"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -97822,7 +97822,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/Configuration/ConfigurationService.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 69
+                  "index": 68
                 },
                 "region": {
                   "startLine": 11,
@@ -97852,7 +97852,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "039C45873CED8511C9347C468B6136B6FC31AB1115CD840D4D0DB54314CC5555"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -97875,7 +97875,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 69
                 },
                 "region": {
                   "startLine": 12,
@@ -97905,7 +97905,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "594DE124CD91156583ECCF54B25748E62DA6ADA745C76E56948AE529027785FF"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -97928,7 +97928,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 69
                 },
                 "region": {
                   "startLine": 13,
@@ -97958,7 +97958,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "93C769A9EA220597D6B56B68439023EE1B275681F780454DF688425BBDCC4859"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -97981,7 +97981,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 69
                 },
                 "region": {
                   "startLine": 14,
@@ -98011,7 +98011,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "841322F1108944A62DBD9CC94A48691198C866917C4CADC07DA69808F8018F39"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -98034,7 +98034,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleMiddleware.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 70
+                  "index": 69
                 },
                 "region": {
                   "startLine": 15,
@@ -98064,7 +98064,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "1D39DDBE7D719D65CB3DA0FF515D172594C988E7EBA9A751E770AF537C6378CA"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -98087,7 +98087,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 49
+                  "index": 70
                 },
                 "region": {
                   "startLine": 18,
@@ -98117,7 +98117,7 @@
           "partialFingerprints": {
             "equalIndicator/v1": "97B1CCCFD338B16F3EB46DD02D86B0E05BDF4DDC297E533A02DE9382BF7D8430"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -98140,7 +98140,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 49
+                  "index": 70
                 },
                 "region": {
                   "startLine": 19,
@@ -98161,16 +98161,16 @@
                   "charOffset": 580,
                   "charLength": 306,
                   "snippet": {
-                    "text": "    private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;\n    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;"
+                    "text": "    private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;\n    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;"
                   }
                 }
               }
             }
           ],
           "partialFingerprints": {
-            "equalIndicator/v1": "1F5CF4E0482B1F83C3483BA5FDDD7851ACDAC53A69590BFD4556FB315B67A741"
+            "equalIndicator/v1": "64456C39BAA91F6CF5278FD24D34E76C9151F4064C616BA48E2D8DB63F47AB5A"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -98193,7 +98193,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 49
+                  "index": 70
                 },
                 "region": {
                   "startLine": 20,
@@ -98203,7 +98203,7 @@
                   "charOffset": 806,
                   "charLength": 80,
                   "snippet": {
-                    "text": "private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;"
+                    "text": "private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;"
                   }
                 },
                 "contextRegion": {
@@ -98214,14 +98214,14 @@
                   "charOffset": 713,
                   "charLength": 252,
                   "snippet": {
-                    "text": "    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;"
+                    "text": "    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;"
                   }
                 }
               }
             }
           ],
           "partialFingerprints": {
-            "equalIndicator/v1": "D172620A110B5CC028B493963204BEED716480F2C5ECD360851B9D56389174E0"
+            "equalIndicator/v1": "8ABCAB9F4BD72F63BDB7E8ECFD023FD73B2D3958ACA17840D2A68D3CE7133E6E"
           },
           "baselineState": "new",
           "properties": {
@@ -98246,7 +98246,7 @@
                 "artifactLocation": {
                   "uri": "src/UnfoldedCircle.Server/WebSocket/UnfoldedCircleWebSocketHandler.cs",
                   "uriBaseId": "solutionDir",
-                  "index": 49
+                  "index": 70
                 },
                 "region": {
                   "startLine": 21,
@@ -98267,16 +98267,16 @@
                   "charOffset": 802,
                   "charLength": 164,
                   "snippet": {
-                    "text": "    private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;\n"
+                    "text": "    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;\n"
                   }
                 }
               }
             }
           ],
           "partialFingerprints": {
-            "equalIndicator/v1": "23633EEBBC5715208A64F03642051AA8D5BFA016E9CDF9A53C592BBB786150DB"
+            "equalIndicator/v1": "4F4C3544F25BF47B2D3AC838385126BA7B264A6DF81425EC78B0242256CB0FF9"
           },
-          "baselineState": "new",
+          "baselineState": "unchanged",
           "properties": {
             "qodanaSeverity": "Moderate",
             "tags": [
@@ -98288,9 +98288,9 @@
       ],
       "automationDetails": {
         "id": "QDNETC/qodana/2025-08-01",
-        "guid": "3b2a9589-97ec-499e-82d7-3de67e5e0394",
+        "guid": "aed672d7-1802-4e32-9ff8-89bbd50627fc",
         "properties": {
-          "jobUrl": "https://github.com/henrikwidlund/unfoldedcircle-firetv/actions/runs/16670766081"
+          "jobUrl": "https://github.com/henrikwidlund/unfoldedcircle-firetv/actions/runs/16670959289"
         }
       },
       "newlineSequences": [
