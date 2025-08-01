@@ -43,6 +43,12 @@ It's compiled for Linux ARM64 and is meant to be running on the remote.
 \* Server port can be adjusted by specifying the desired port with the `UC_INTEGRATION_HTTP_PORT` environment variable.
 \** ADB port can be adjusted during configuration if your device uses a different port.
 
+### Additional commands
+
+You can send any `input keyevent` command with the remote entity if it's added to an activity.
+A list of commands can be found in the official docs at [Android KeyEvent](https://developer.android.com/reference/android/view/KeyEvent)
+and [here](https://gist.github.com/arjunv/2bbcca9a1a1c127749f8dcb6d36fb0bc). Make sure to only use the digits in the commands.
+
 ### Development
 
 - [dotnet 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
