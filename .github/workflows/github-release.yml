@@ -1,0 +1,102 @@
+name: GitHub Release
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release native binaries
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        kind: [ 'linux-x64', 'linux-arm64', 'macos', 'windows' ]
+        include:
+          - kind: linux-x64
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: linux-arm64
+            os: ubuntu-24.04-arm
+            target: linux-arm64
+          - kind: macos
+            os: macos-latest
+            target: osx
+          - kind: windows
+            os: windows-latest
+            target: win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          # Build everything
+          ASSEMBLY_VERSION="${tag//v}"
+          if [ "${{ matrix.kind }}" == "linux-x64" ] || [ "${{ matrix.kind }}" == "linux-arm64" ]; then
+            release_name="unfolded-circle-firetv-$tag-${{ matrix.target }}"
+            
+            dotnet publish ./src/UnfoldedCircle.Server/UnfoldedCircle.Server.csproj -r ${{ matrix.target }} -c Release -p:PublishUsingAot=true -o ./publish -p:Version="$ASSEMBLY_VERSION"
+            tar -czvf "${release_name}.tar.gz" -C ./publish .
+            
+            if [ "${{ matrix.target }}" == "linux-arm64" ]; then
+              mkdir driverdir && mkdir driverdir/bin && mkdir driverdir/config && mkdir driverdir/data
+              cp publish/driver.json driverdir/driver.json
+              cp ./firetv.png ./driverdir/firetv.png
+              cp publish/appsettings*.json driverdir/bin/
+              # Download the latest version of adb for arm64
+              curl -sL "$(curl -s https://api.github.com/repos/prife/adb/releases/latest | grep browser_download_url | cut -d\" -f4 | grep 'aarch64-29.0.6-optimize$')" -o adb
+              chmod a+x adb
+              mv adb driverdir/bin/
+              
+              cp publish/driver driverdir/bin/
+              
+              tar -czvf unfoldedcircle-firetv.tar.gz -C ./driverdir .
+              
+              # Delete output directory
+              rm -r "./driverdir"
+            fi
+            # Delete output directory
+            rm -r "./publish"
+          else
+            for target_arch in "x64" "arm64"; do
+              target="${{ matrix.target }}-$target_arch"
+              release_name="unfolded-circle-firetv-$tag-$target"
+              publish_aot=false
+              if [ "$target_arch" == "x64" ]; then
+                  publish_aot=true
+              fi
+              
+              dotnet publish ./src/UnfoldedCircle.Server/UnfoldedCircle.Server.csproj -r $target -c Release -p:PublishUsingAot="$publish_aot" -o ./publish -p:Version="$ASSEMBLY_VERSION"
+              if [ "${{ matrix.kind }}" == "windows" ]; then
+                # Pack to zip for Windows
+                7z a -tzip "${release_name}.zip" "./publish/*"
+              else
+                # Pack tar.gz for non-Windows
+                tar -czvf "${release_name}.tar.gz" -C ./publish .
+              fi
+              
+              # Delete output directory
+              rm -r "./publish"
+            done
+          fi
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            unfolded-circle-firetv*.zip
+            unfolded-circle-firetv*.tar.gz
+            unfoldedcircle-firetv.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
