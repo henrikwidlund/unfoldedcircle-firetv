@@ -12,12 +12,12 @@ namespace UnfoldedCircle.Server.WebSocket;
 internal sealed partial class UnfoldedCircleWebSocketHandler(
     UnfoldedCircleJsonSerializerContext unfoldedCircleJsonSerializerContext,
     IConfigurationService configurationService,
-    FireTvClientFactory fireTVClientFactory,
+    FireTvClientFactory fireTvClientFactory,
     ILogger<UnfoldedCircleWebSocketHandler> logger)
 {
     private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;
     private readonly IConfigurationService _configurationService = configurationService;
-    private readonly FireTvClientFactory _fireTvClientFactory = fireTVClientFactory;
+    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;
     private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;
 
     public async Task<WebSocketReceiveResult> HandleWebSocketAsync(
