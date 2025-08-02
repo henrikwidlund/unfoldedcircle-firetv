@@ -528,8 +528,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     }
                 ]
             },
-            DeviceDiscovery = false,
-            Icon = "custom:adbtv.png"
+            DeviceDiscovery = false
         };
 
     private const string MacAddressRegex = "^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$";
