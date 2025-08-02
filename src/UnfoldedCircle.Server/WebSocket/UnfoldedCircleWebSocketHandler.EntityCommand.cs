@@ -57,6 +57,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateStateChangedResponsePayload(
                             new RemoteStateChangedEventMessageDataAttributes { State = RemoteStates[fireTvClientHolder.ClientKey] = RemoteState.On },
+                            payload.MsgData.EntityId,
                             _unfoldedCircleJsonSerializerContext),
                         wsId,
                         cancellationTokenWrapper.ApplicationStopping);
@@ -66,6 +67,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateStateChangedResponsePayload(
                             new RemoteStateChangedEventMessageDataAttributes { State = RemoteStates[fireTvClientHolder.ClientKey] = RemoteState.Off },
+                            payload.MsgData.EntityId,
                             _unfoldedCircleJsonSerializerContext),
                         wsId,
                         cancellationTokenWrapper.ApplicationStopping);

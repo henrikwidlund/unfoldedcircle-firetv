@@ -42,18 +42,18 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         }, _unfoldedCircleJsonSerializerContext),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.GetDriverMetaData:
             {
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.CommonReq)!;
-                
+
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateDriverMetaDataResponsePayload(payload, CreateDriverMetadata(), _unfoldedCircleJsonSerializerContext),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.GetDeviceState:
@@ -68,32 +68,19 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     ),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.GetAvailableEntities:
             {
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetAvailableEntitiesMsg)!;
-                var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, payload.MsgData.Filter?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
-                bool isConnected;
-                string? ipAddress;
-                if (fireTvClientHolder is not null)
-                {
-                    isConnected = fireTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online;
-                    ipAddress = fireTvClientHolder.Client.Device.Serial;
-                }
-                else
-                {
-                    isConnected = false;
-                    ipAddress = null;
-                }
-                
+                var entities = await GetEntities(wsId, payload.MsgData.Filter?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetAvailableEntitiesMsg(payload,
                         new AvailableEntitiesMsgData<RemoteFeature, RemoteOptions>
                         {
                             Filter = payload.MsgData.Filter,
-                            AvailableEntities = GetAvailableEntities(payload, isConnected, ipAddress)
+                            AvailableEntities = GetAvailableEntities(entities)
                         },
                         _unfoldedCircleJsonSerializerContext),
                     wsId,
@@ -108,7 +95,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.UnsubscribeEvents:
@@ -120,21 +107,22 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.GetEntityStates:
             {
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetEntityStatesMsg)!;
-                var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var entities = await GetEntities(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetEntityStatesResponsePayload(payload,
-                        fireTvClientHolder is not null && fireTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online,
-                        payload.MsgData?.DeviceId,
+                        entities is { Count: > 0 }
+                            ? entities.Select(static x => new EntityIdDeviceId(x.EntityId, x.DeviceId))
+                            : [],
                         _unfoldedCircleJsonSerializerContext),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
-                
+
                 return;
             }
             case MessageEvent.SetupDriver:
@@ -143,7 +131,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 SocketIdEntityIpMap.AddOrUpdate(wsId,
                     static (_, arg) => arg.MsgData.SetupData[FireTv.FireTvConstants.IpAddressKey],
                     static (_, _, arg) => arg.MsgData.SetupData[FireTv.FireTvConstants.IpAddressKey], payload);
-                
+
                 var entity = await UpdateConfiguration(payload.MsgData.SetupData, cancellationTokenWrapper.ApplicationStopping);
                 if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
                 {
@@ -243,220 +231,205 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         );
     }
 
-    private static AvailableEntity<RemoteFeature, RemoteOptions>[] GetAvailableEntities(
-        GetAvailableEntitiesMsg payload,
-        in bool isConnected,
-        string? ipAddress) =>
-        isConnected
-            ?
+    private static readonly RemoteOptions RemoteOptions = new()
+    {
+        ButtonMapping =
+        [
+            new DeviceButtonMapping { Button = RemoteButtons.Home, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Home } },
+            new DeviceButtonMapping { Button = RemoteButtons.Back, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Back } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadLeft, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadLeft } },
+            new DeviceButtonMapping { Button = RemoteButtons.ChannelUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.ChannelDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadRight, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadRight } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadMiddle, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadCenter } },
+            new DeviceButtonMapping { Button = RemoteButtons.VolumeUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.VolumeDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.Power, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Power } },
+            new DeviceButtonMapping { Button = RemoteButtons.Mute, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Mute } }
+        ],
+        SimpleCommands =
+        [
+            RemoteCommands.Home, RemoteCommands.Back, RemoteCommands.Digit0,
+            RemoteCommands.Digit1, RemoteCommands.Digit2, RemoteCommands.Digit3,
+            RemoteCommands.Digit4, RemoteCommands.Digit5, RemoteCommands.Digit6,
+            RemoteCommands.Digit7, RemoteCommands.Digit8, RemoteCommands.Digit9,
+            RemoteCommands.CursorUp, RemoteCommands.CursorDown, RemoteCommands.CursorLeft,
+            RemoteCommands.CursorRight, RemoteCommands.CursorEnter, RemoteCommands.VolumeUp,
+            RemoteCommands.VolumeDown, RemoteCommands.MuteToggle, RemoteCommands.Info,
+            RemoteCommands.ChannelUp, RemoteCommands.ChannelDown, RemoteCommands.Settings,
+            RemoteCommands.InputHdmi1, RemoteCommands.InputHdmi2, RemoteCommands.InputHdmi3,
+            RemoteCommands.InputHdmi4
+        ],
+        UserInterface = new UserInterface
+        {
+            Pages =
             [
-                new AvailableEntity<RemoteFeature, RemoteOptions>
+                new UserInterfacePage
                 {
-                    Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                    {
-                        ["en"] = $"{FireTv.FireTvConstants.DeviceName} {ipAddress?[..ipAddress.IndexOf(':', StringComparison.OrdinalIgnoreCase)]}"
-                    },
-                    EntityId = FireTv.FireTvConstants.EntityId,
-                    EntityType = EntityType.Remote,
-                    Features = FireTvEntitySettings.RemoteFeatures,
-                    DeviceId = payload.MsgData.Filter?.DeviceId ?? ipAddress,
-                    Options = new RemoteOptions
-                    {
-                        ButtonMapping =
-                        [
-                            new DeviceButtonMapping { Button = RemoteButtons.Home, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Home } },
-                            new DeviceButtonMapping { Button = RemoteButtons.Back, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Back } },
-                            new DeviceButtonMapping { Button = RemoteButtons.DpadDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadDown } },
-                            new DeviceButtonMapping { Button = RemoteButtons.DpadUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadUp } },
-                            new DeviceButtonMapping { Button = RemoteButtons.DpadLeft, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadLeft } },
-                            new DeviceButtonMapping { Button = RemoteButtons.ChannelUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelUp } },
-                            new DeviceButtonMapping { Button = RemoteButtons.ChannelDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelDown } },
-                            new DeviceButtonMapping
-                            {
-                                Button = RemoteButtons.DpadRight, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadRight }
-                            },
-                            new DeviceButtonMapping
-                            {
-                                Button = RemoteButtons.DpadMiddle, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadCenter }
-                            },
-                            new DeviceButtonMapping { Button = RemoteButtons.VolumeUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeUp } },
-                            new DeviceButtonMapping
-                            {
-                                Button = RemoteButtons.VolumeDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeDown }
-                            },
-                            new DeviceButtonMapping { Button = RemoteButtons.Power, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Power } },
-                            new DeviceButtonMapping { Button = RemoteButtons.Mute, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Mute } }
-                        ],
-                        SimpleCommands =
-                        [
-                            RemoteCommands.Home, RemoteCommands.Back, RemoteCommands.Digit0,
-                            RemoteCommands.Digit1, RemoteCommands.Digit2, RemoteCommands.Digit3,
-                            RemoteCommands.Digit4, RemoteCommands.Digit5, RemoteCommands.Digit6,
-                            RemoteCommands.Digit7, RemoteCommands.Digit8, RemoteCommands.Digit9,
-                            RemoteCommands.CursorUp, RemoteCommands.CursorDown, RemoteCommands.CursorLeft,
-                            RemoteCommands.CursorRight, RemoteCommands.CursorEnter, RemoteCommands.VolumeUp,
-                            RemoteCommands.VolumeDown, RemoteCommands.MuteToggle, RemoteCommands.Info,
-                            RemoteCommands.ChannelUp, RemoteCommands.ChannelDown, RemoteCommands.Settings,
-                            RemoteCommands.InputHdmi1, RemoteCommands.InputHdmi2, RemoteCommands.InputHdmi3,
-                            RemoteCommands.InputHdmi4
-                        ],
-                        UserInterface = new UserInterface
+                    PageId = "uc_firetv_general",
+                    Name = "General",
+                    Grid = new Grid { Height = 4, Width = 2 },
+                    Items =
+                    [
+                        new UserInterfaceItem
                         {
-                            Pages =
-                            [
-                                new UserInterfacePage
-                                {
-                                    PageId = "uc_firetv_general",
-                                    Name = "General",
-                                    Grid = new Grid { Height = 4, Width = 2 },
-                                    Items =
-                                    [
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "HDMI 1",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi1 },
-                                            Location = new GridLocation { X = 0, Y = 0 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "HDMI 2",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi2 },
-                                            Location = new GridLocation { X = 1, Y = 0 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "HDMI 3",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi3 },
-                                            Location = new GridLocation { X = 0, Y = 1 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "HDMI 4",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi4 },
-                                            Location = new GridLocation { X = 1, Y = 1 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "Info",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Info },
-                                            Location = new GridLocation { X = 0, Y = 3 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "Settings",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Settings },
-                                            Location = new GridLocation { X = 1, Y = 3 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        }
-                                    ]
-                                },
-                                new UserInterfacePage
-                                {
-                                    PageId = "uc_firetv_numpad",
-                                    Name = "Numpad",
-                                    Grid = new Grid { Height = 4, Width = 3 },
-                                    Items =
-                                    [
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "1",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit1 },
-                                            Location = new GridLocation { X = 0, Y = 0 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "2",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit2 },
-                                            Location = new GridLocation { X = 1, Y = 0 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "3",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit3 },
-                                            Location = new GridLocation { X = 2, Y = 0 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "4",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit4 },
-                                            Location = new GridLocation { X = 0, Y = 1 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "5",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit5 },
-                                            Location = new GridLocation { X = 1, Y = 1 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "6",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit6 },
-                                            Location = new GridLocation { X = 2, Y = 1 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "7",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit7 },
-                                            Location = new GridLocation { X = 0, Y = 2 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "8",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit8 },
-                                            Location = new GridLocation { X = 1, Y = 2 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "9",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit9 },
-                                            Location = new GridLocation { X = 2, Y = 2 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                        new UserInterfaceItem
-                                        {
-                                            Type = UserInterfaceItemType.Text,
-                                            Text = "0",
-                                            Command = new EntityCommand { CmdId = RemoteCommands.Digit0 },
-                                            Location = new GridLocation { X = 1, Y = 3 },
-                                            Size = new GridItemSize { Height = 1, Width = 1 }
-                                        },
-                                    ]
-                                }
-                            ]
+                            Type = UserInterfaceItemType.Text,
+                            Text = "HDMI 1",
+                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi1 },
+                            Location = new GridLocation { X = 0, Y = 0 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "HDMI 2",
+                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi2 },
+                            Location = new GridLocation { X = 1, Y = 0 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "HDMI 3",
+                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi3 },
+                            Location = new GridLocation { X = 0, Y = 1 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "HDMI 4",
+                            Command = new EntityCommand { CmdId = RemoteCommands.InputHdmi4 },
+                            Location = new GridLocation { X = 1, Y = 1 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "Info",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Info },
+                            Location = new GridLocation { X = 0, Y = 3 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "Settings",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Settings },
+                            Location = new GridLocation { X = 1, Y = 3 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
                         }
-                    }
+                    ]
+                },
+                new UserInterfacePage
+                {
+                    PageId = "uc_firetv_numpad",
+                    Name = "Numpad",
+                    Grid = new Grid { Height = 4, Width = 3 },
+                    Items =
+                    [
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "1",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit1 },
+                            Location = new GridLocation { X = 0, Y = 0 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "2",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit2 },
+                            Location = new GridLocation { X = 1, Y = 0 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "3",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit3 },
+                            Location = new GridLocation { X = 2, Y = 0 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "4",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit4 },
+                            Location = new GridLocation { X = 0, Y = 1 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "5",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit5 },
+                            Location = new GridLocation { X = 1, Y = 1 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "6",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit6 },
+                            Location = new GridLocation { X = 2, Y = 1 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "7",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit7 },
+                            Location = new GridLocation { X = 0, Y = 2 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "8",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit8 },
+                            Location = new GridLocation { X = 1, Y = 2 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "9",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit9 },
+                            Location = new GridLocation { X = 2, Y = 2 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                        new UserInterfaceItem
+                        {
+                            Type = UserInterfaceItemType.Text,
+                            Text = "0",
+                            Command = new EntityCommand { CmdId = RemoteCommands.Digit0 },
+                            Location = new GridLocation { X = 1, Y = 3 },
+                            Size = new GridItemSize { Height = 1, Width = 1 }
+                        },
+                    ]
                 }
             ]
+        }
+    };
+
+    private static AvailableEntity<RemoteFeature, RemoteOptions>[] GetAvailableEntities(
+        List<UnfoldedCircleConfigurationItem>? entities) =>
+        entities is { Count: > 0 }
+            ? entities.Select(static x => new AvailableEntity<RemoteFeature, RemoteOptions>
+            {
+                EntityId = x.EntityId,
+                EntityType = EntityType.Remote,
+                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{FireTv.FireTvConstants.DeviceName} {x.IpAddress}" },
+                DeviceId = x.DeviceId,
+                Features = FireTvEntitySettings.RemoteFeatures,
+                Options = RemoteOptions
+            }).ToArray()
             : [];
 
     private static DriverMetadata? _driverMetadata;

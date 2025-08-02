@@ -32,7 +32,32 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         _logger.LogInformation("[{WSId}] WS: No configuration found for device ID '{DeviceId}'", wsId, deviceId);
         return null;
     }
-    
+
+    private async Task<List<UnfoldedCircleConfigurationItem>?> GetEntities(
+        string wsId,
+        string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
+        if (configuration.Entities.Count == 0)
+        {
+            _logger.LogInformation("[{WSId}] WS: No configurations found", wsId);
+            return null;
+        }
+
+        if (!string.IsNullOrEmpty(deviceId))
+        {
+            var entity = configuration.Entities.Find(x => string.Equals(x.DeviceId, deviceId, StringComparison.Ordinal));
+            if (entity is not null)
+                return [entity];
+
+            _logger.LogInformation("[{WSId}] WS: No configuration found for device ID '{DeviceId}'", wsId, deviceId);
+            return null;
+        }
+
+        return configuration.Entities;
+    }
+
     private async Task<FireTvClientHolder?> TryGetFireTvClientHolder(
         string wsId,
         string? deviceId,
@@ -41,7 +66,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         var fireTvClientKey = await TryGetFireTvClientKey(wsId, deviceId, cancellationToken);
         if (fireTvClientKey is null)
             return null;
-        
+
         var deviceClient = await _fireTvClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
         if (deviceClient is null)
             return null;
@@ -71,7 +96,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         } while (!connectResult.StartsWith("already connected to ", StringComparison.InvariantCultureIgnoreCase));
 
         var deviceData = (await adbClient.GetDevicesAsync(cancellationToken)).FirstOrDefault(x =>
-            x.Serial.Equals($"{fireTvClientKey.Value.IpAddress}:{fireTvClientKey.Value.Port}", StringComparison.InvariantCulture));
+            x.Serial.Equals($"{fireTvClientKey.Value.IpAddress}:{fireTvClientKey.Value.Port.ToString(NumberFormatInfo.InvariantInfo)}", StringComparison.InvariantCulture));
         return deviceData is { State: AdvancedSharpAdbClient.Models.DeviceState.Online };
     }
     
@@ -111,7 +136,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 Port = port,
                 DeviceId = deviceId,
                 DeviceName = $"{FireTv.FireTvConstants.DeviceName} {ipAddress}",
-                EntityId = FireTv.FireTvConstants.EntityId
+                EntityId = macAddress
             };
         }
         else

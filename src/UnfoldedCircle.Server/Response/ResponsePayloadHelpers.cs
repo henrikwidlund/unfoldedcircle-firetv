@@ -1,7 +1,7 @@
 using UnfoldedCircle.Models.Events;
 using UnfoldedCircle.Models.Shared;
 using UnfoldedCircle.Models.Sync;
-using UnfoldedCircle.Server.FireTv;
+using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Json;
 
 namespace UnfoldedCircle.Server.Response;
@@ -102,8 +102,7 @@ internal static class ResponsePayloadHelpers
 
     public static byte[] CreateGetEntityStatesResponsePayload(
         CommonReq req,
-        in bool isConnected,
-        string? deviceId,
+        IEnumerable<EntityIdDeviceId> entityIdDeviceIds,
         UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
         JsonSerializer.SerializeToUtf8Bytes(new EntityStates<RemoteEntityAttribute>
         {
@@ -111,18 +110,13 @@ internal static class ResponsePayloadHelpers
             Kind = "resp",
             ReqId = req.Id,
             Msg = "entity_states",
-            MsgData = isConnected
-                ?
-                [
-                    new EntityStateChanged<RemoteEntityAttribute>
-                    {
-                        EntityId = FireTvConstants.EntityId,
-                        EntityType = EntityType.Remote,
-                        Attributes = RemoteEntityAttributes,
-                        DeviceId = deviceId
-                    }
-                ]
-                : []
+            MsgData = entityIdDeviceIds.Select(static x => new EntityStateChanged<RemoteEntityAttribute>
+            {
+                EntityId = x.EntityId,
+                EntityType = EntityType.Remote,
+                Attributes = RemoteEntityAttributes,
+                DeviceId = x.DeviceId
+            }).ToArray()
         }, jsonSerializerContext.EntityStatesRemoteEntityAttribute);
 
     private static readonly RemoteEntityAttribute[] RemoteEntityAttributes =
@@ -201,6 +195,7 @@ internal static class ResponsePayloadHelpers
 
     internal static byte[] CreateStateChangedResponsePayload(
         RemoteStateChangedEventMessageDataAttributes attributes,
+        string entityId,
         UnfoldedCircleJsonSerializerContext jsonSerializerContext)
         =>
         JsonSerializer.SerializeToUtf8Bytes(new StateChangedEvent<RemoteStateChangedEventMessageDataAttributes>
@@ -211,7 +206,7 @@ internal static class ResponsePayloadHelpers
             TimeStamp = DateTime.UtcNow,
             MsgData = new StateChangedEventMessageData<RemoteStateChangedEventMessageDataAttributes>
             {
-                EntityId = FireTvConstants.EntityId,
+                EntityId = entityId,
                 EntityType = EntityType.Remote,
                 Attributes = attributes
             }
