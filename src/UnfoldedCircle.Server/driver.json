@@ -1,6 +1,6 @@
 {
   "driver_id": "firetv-unfolded-circle",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "min_core_api": "0.20.0",
   "name": {
     "en": "Fire TV"
