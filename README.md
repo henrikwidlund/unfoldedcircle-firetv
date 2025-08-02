@@ -49,6 +49,9 @@ You can send any `input keyevent` command with the remote entity if it's added t
 A list of commands can be found in the official docs at [Android KeyEvent](https://developer.android.com/reference/android/view/KeyEvent)
 and [here](https://gist.github.com/arjunv/2bbcca9a1a1c127749f8dcb6d36fb0bc). Make sure to only use the digits in the commands.
 
+You can also prefix a command with `RAW:` to send a raw shell command to the Fire TV.
+Make sure to not include the `adb shell` part of the command, device IP, ports and similar, as it is already included by the integration.
+
 ### Development
 
 - [dotnet 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).

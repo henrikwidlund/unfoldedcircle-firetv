@@ -138,18 +138,29 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         if (string.IsNullOrEmpty(command))
             return false;
 
+        var isRawCommand = false;
+        if (command.StartsWith("RAW:", StringComparison.OrdinalIgnoreCase))
+        {
+            command = command[4..];
+            isRawCommand = true;
+        }
+
         var delay = payload.MsgData.Params?.Delay ?? 0;
         if (payload.MsgData.Params?.Repeat.HasValue is true)
         {
             for (var i = 0; i < payload.MsgData.Params.Repeat.Value; i++)
             {
-                await fireTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping);
+                await (isRawCommand ?
+                    fireTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, fireTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
+                    fireTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
                 if (delay> 0)
                     await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationTokenWrapper.ApplicationStopping);
             }
         }
         else
-            await fireTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping);
+            await (isRawCommand ?
+                fireTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, fireTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
+                fireTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
 
         return true;
     }
