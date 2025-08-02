@@ -1,7 +1,7 @@
 using Makaretu.Dns;
 
+using UnfoldedCircle.Server.AdbTv;
 using UnfoldedCircle.Server.Configuration;
-using UnfoldedCircle.Server.FireTv;
 
 namespace UnfoldedCircle.Server.BackgroundServices;
 
@@ -15,7 +15,7 @@ public sealed class MDnsBackgroundService : IHostedService, IDisposable
     {
         _loggerFactory = loggerFactory;
         // Get the local hostname
-        _serviceProfile = new ServiceProfile(FireTvConstants.DriverId,
+        _serviceProfile = new ServiceProfile(AdbTvConstants.DriverId,
             "_uc-integration._tcp",
             configuration.GetOrDefault<ushort>("UC_INTEGRATION_HTTP_PORT", 9001))
         {
@@ -23,9 +23,9 @@ public sealed class MDnsBackgroundService : IHostedService, IDisposable
         };
 
         // Add TXT records
-        _serviceProfile.AddProperty("name", FireTvConstants.DriverName);
-        _serviceProfile.AddProperty("ver", FireTvConstants.DriverVersion);
-        _serviceProfile.AddProperty("developer", FireTvConstants.DriverDeveloper);
+        _serviceProfile.AddProperty("name", AdbTvConstants.DriverName);
+        _serviceProfile.AddProperty("ver", AdbTvConstants.DriverVersion);
+        _serviceProfile.AddProperty("developer", AdbTvConstants.DriverDeveloper);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

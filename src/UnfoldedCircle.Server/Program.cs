@@ -1,4 +1,4 @@
-using UnfoldedCircle.FireTV;
+using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Server.BackgroundServices;
 using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Json;
@@ -19,7 +19,7 @@ var unfoldedCircleJsonSerializerContext = new UnfoldedCircleJsonSerializerContex
 
 builder.Services.AddSingleton(unfoldedCircleJsonSerializerContext);
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
-builder.Services.AddSingleton<FireTvClientFactory>();
+builder.Services.AddSingleton<AdbTvClientFactory>();
 builder.Services.AddMemoryCache();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

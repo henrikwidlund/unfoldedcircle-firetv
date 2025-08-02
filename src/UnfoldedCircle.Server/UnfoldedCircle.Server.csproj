@@ -48,7 +48,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Mdns\Mdns.csproj" />
-        <ProjectReference Include="..\UnfoldedCircle.FireTV\UnfoldedCircle.FireTV.csproj" />
+        <ProjectReference Include="..\UnfoldedCircle.AdbTv\UnfoldedCircle.AdbTv.csproj" />
         <ProjectReference Include="..\UnfoldedCircle.Generators\UnfoldedCircle.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\UnfoldedCircle.Models\UnfoldedCircle.Models.csproj" />
     </ItemGroup>

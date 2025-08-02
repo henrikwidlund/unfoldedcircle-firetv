@@ -45,7 +45,7 @@ jobs:
           # Build everything
           ASSEMBLY_VERSION="${tag//v}"
           if [ "${{ matrix.kind }}" == "linux-x64" ] || [ "${{ matrix.kind }}" == "linux-arm64" ]; then
-            release_name="unfolded-circle-firetv-$tag-${{ matrix.target }}"
+            release_name="unfolded-circle-adbtv-$tag-${{ matrix.target }}"
             
             dotnet publish ./src/UnfoldedCircle.Server/UnfoldedCircle.Server.csproj -r ${{ matrix.target }} -c Release -p:PublishUsingAot=true -o ./publish -p:Version="$ASSEMBLY_VERSION"
             tar -czvf "${release_name}.tar.gz" -C ./publish .
@@ -53,7 +53,6 @@ jobs:
             if [ "${{ matrix.target }}" == "linux-arm64" ]; then
               mkdir driverdir && mkdir driverdir/bin && mkdir driverdir/config && mkdir driverdir/data
               cp publish/driver.json driverdir/driver.json
-              cp ./firetv.png ./driverdir/firetv.png
               cp publish/appsettings*.json driverdir/bin/
               # Download the latest version of adb for arm64
               curl -sL "$(curl -s https://api.github.com/repos/prife/adb/releases/latest | grep browser_download_url | cut -d\" -f4 | grep 'aarch64-29.0.6-optimize$')" -o adb
@@ -62,7 +61,7 @@ jobs:
               
               cp publish/driver driverdir/bin/
               
-              tar -czvf unfoldedcircle-firetv.tar.gz -C ./driverdir .
+              tar -czvf unfoldedcircle-adbtv.tar.gz -C ./driverdir .
               
               # Delete output directory
               rm -r "./driverdir"
@@ -72,7 +71,7 @@ jobs:
           else
             for target_arch in "x64" "arm64"; do
               target="${{ matrix.target }}-$target_arch"
-              release_name="unfolded-circle-firetv-$tag-$target"
+              release_name="unfolded-circle-adbtv-$tag-$target"
               publish_aot=false
               if [ "$target_arch" == "x64" ]; then
                   publish_aot=true
@@ -95,8 +94,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            unfolded-circle-firetv*.zip
-            unfolded-circle-firetv*.tar.gz
-            unfoldedcircle-firetv.tar.gz
+            unfolded-circle-adbtv*.zip
+            unfolded-circle-adbtv*.tar.gz
+            unfoldedcircle-adbtv.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

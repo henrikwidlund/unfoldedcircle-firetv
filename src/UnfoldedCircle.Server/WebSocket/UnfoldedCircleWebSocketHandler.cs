@@ -1,7 +1,8 @@
 using System.Buffers;
 using System.Net.WebSockets;
 using System.Text;
-using UnfoldedCircle.FireTV;
+
+using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Event;
 using UnfoldedCircle.Server.Json;
@@ -12,12 +13,12 @@ namespace UnfoldedCircle.Server.WebSocket;
 internal sealed partial class UnfoldedCircleWebSocketHandler(
     UnfoldedCircleJsonSerializerContext unfoldedCircleJsonSerializerContext,
     IConfigurationService configurationService,
-    FireTvClientFactory fireTvClientFactory,
+    AdbTvClientFactory adbTvClientFactory,
     ILogger<UnfoldedCircleWebSocketHandler> logger)
 {
     private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;
     private readonly IConfigurationService _configurationService = configurationService;
-    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;
+    private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;
     private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;
 
     public async Task<WebSocketReceiveResult> HandleWebSocketAsync(

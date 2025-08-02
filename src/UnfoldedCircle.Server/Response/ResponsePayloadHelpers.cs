@@ -159,7 +159,7 @@ internal static class ResponsePayloadHelpers
                     {
                         Title = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                         {
-                            ["en"] = "Confirm ADB Access on Fire TV"
+                            ["en"] = "Confirm ADB Access on your TV"
                         }
                     }
                 }
