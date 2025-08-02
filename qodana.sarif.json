@@ -73239,11 +73239,11 @@
       "language": "en-US",
       "versionControlProvenance": [
         {
-          "repositoryUri": "https://github.com/henrikwidlund/unfoldedcircle-firetv.git",
+          "repositoryUri": "https://github.com/henrikwidlund/unfoldedcircle-adbtv.git",
           "revisionId": "88dd484e248cc178af359e4a526a082b798f12a3",
           "branch": "main",
           "properties": {
-            "repoUrl": "https://github.com/henrikwidlund/unfoldedcircle-firetv.git",
+            "repoUrl": "https://github.com/henrikwidlund/unfoldedcircle-adbtv.git",
             "lastAuthorName": "Henrik Widlund",
             "vcsType": "Git",
             "lastAuthorEmail": "4659350+henrikwidlund@users.noreply.github.com"
@@ -73723,7 +73723,7 @@
         },
         {
           "location": {
-            "uri": "src/UnfoldedCircle.FireTV/FireTVClientFactory.cs",
+            "uri": "src/UnfoldedCircle.AdbTv/AdbTvClientFactory.cs",
             "uriBaseId": "solutionDir"
           },
           "hashes": {}
@@ -89500,7 +89500,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/UnfoldedCircle.FireTV/FireTVClientFactory.cs",
+                  "uri": "src/UnfoldedCircle.AdbTv/AdbTvClientFactory.cs",
                   "uriBaseId": "solutionDir",
                   "index": 67
                 },
@@ -89512,7 +89512,7 @@
                   "charOffset": 261,
                   "charLength": 63,
                   "snippet": {
-                    "text": "private readonly ILogger<FireTvClientFactory> _logger = logger;"
+                    "text": "private readonly ILogger<AdbTvClientFactory> _logger = logger;"
                   }
                 },
                 "contextRegion": {
@@ -89523,7 +89523,7 @@
                   "charOffset": 255,
                   "charLength": 160,
                   "snippet": {
-                    "text": "{\n    private readonly ILogger<FireTvClientFactory> _logger = logger;\n    private readonly ConcurrentDictionary<FireTvClientKey, DeviceClient> _clients = new();"
+                    "text": "{\n    private readonly ILogger<AdbTvClientFactory> _logger = logger;\n    private readonly ConcurrentDictionary<AdbTvClientKey, DeviceClient> _clients = new();"
                   }
                 }
               }
@@ -98161,7 +98161,7 @@
                   "charOffset": 580,
                   "charLength": 306,
                   "snippet": {
-                    "text": "    private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;\n    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;"
+                    "text": "    private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;\n    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;"
                   }
                 }
               }
@@ -98203,7 +98203,7 @@
                   "charOffset": 806,
                   "charLength": 80,
                   "snippet": {
-                    "text": "private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;"
+                    "text": "private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;"
                   }
                 },
                 "contextRegion": {
@@ -98214,7 +98214,7 @@
                   "charOffset": 713,
                   "charLength": 252,
                   "snippet": {
-                    "text": "    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;"
+                    "text": "    private readonly IConfigurationService _configurationService = configurationService;\n    private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;"
                   }
                 }
               }
@@ -98267,7 +98267,7 @@
                   "charOffset": 802,
                   "charLength": 164,
                   "snippet": {
-                    "text": "    private readonly FireTvClientFactory _fireTvClientFactory = fireTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;\n"
+                    "text": "    private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;\n    private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;\n"
                   }
                 }
               }
@@ -98290,7 +98290,7 @@
         "id": "QDNETC/qodana/2025-08-01",
         "guid": "aed672d7-1802-4e32-9ff8-89bbd50627fc",
         "properties": {
-          "jobUrl": "https://github.com/henrikwidlund/unfoldedcircle-firetv/actions/runs/16670959289"
+          "jobUrl": "https://github.com/henrikwidlund/unfoldedcircle-adbtv/actions/runs/16670959289"
         }
       },
       "newlineSequences": [

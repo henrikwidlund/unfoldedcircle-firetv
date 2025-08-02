@@ -3,15 +3,17 @@ using System.Globalization;
 using AdvancedSharpAdbClient;
 using AdvancedSharpAdbClient.DeviceCommands;
 
-using UnfoldedCircle.FireTV;
+using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Models.Shared;
 using UnfoldedCircle.Server.Configuration;
+
+using AdbTvConstants = UnfoldedCircle.Server.AdbTv.AdbTvConstants;
 
 namespace UnfoldedCircle.Server.WebSocket;
 
 internal sealed partial class UnfoldedCircleWebSocketHandler
 {
-    private async Task<FireTvClientKey?> TryGetFireTvClientKey(
+    private async Task<AdbTvClientKey?> TryGetAdbTvClientKey(
         string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
@@ -27,7 +29,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             ? configuration.Entities.Find(x => string.Equals(x.DeviceId, deviceId, StringComparison.Ordinal))
             : configuration.Entities[0];
         if (entity is not null)
-            return new FireTvClientKey(entity.IpAddress, entity.MacAddress, entity.Port);
+            return new AdbTvClientKey(entity.IpAddress, entity.MacAddress, entity.Port);
 
         _logger.LogInformation("[{WSId}] WS: No configuration found for device ID '{DeviceId}'", wsId, deviceId);
         return null;
@@ -58,45 +60,45 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         return configuration.Entities;
     }
 
-    private async Task<FireTvClientHolder?> TryGetFireTvClientHolder(
+    private async Task<AdbTvClientHolder?> TryGetAdbTvClientHolder(
         string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var fireTvClientKey = await TryGetFireTvClientKey(wsId, deviceId, cancellationToken);
-        if (fireTvClientKey is null)
+        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        if (adbTvClientKey is null)
             return null;
 
-        var deviceClient = await _fireTvClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
+        var deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey.Value, cancellationToken);
         if (deviceClient is null)
             return null;
 
         if (deviceClient.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
-            return new FireTvClientHolder(deviceClient, fireTvClientKey.Value);
+            return new AdbTvClientHolder(deviceClient, adbTvClientKey.Value);
 
-        _fireTvClientFactory.TryRemoveClient(fireTvClientKey.Value);
-        deviceClient = await _fireTvClientFactory.TryGetOrCreateClient(fireTvClientKey.Value, cancellationToken);
+        _adbTvClientFactory.TryRemoveClient(adbTvClientKey.Value);
+        deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey.Value, cancellationToken);
 
-        return deviceClient is null ? null : new FireTvClientHolder(deviceClient, fireTvClientKey.Value);
+        return deviceClient is null ? null : new AdbTvClientHolder(deviceClient, adbTvClientKey.Value);
     }
 
     private async Task<bool> CheckClientApproved(string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var fireTvClientKey = await TryGetFireTvClientKey(wsId, deviceId, cancellationToken);
-        if (fireTvClientKey is null)
+        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        if (adbTvClientKey is null)
             return false;
 
         var adbClient = new AdbClient();
         string connectResult;
         do
         {
-            connectResult = await adbClient.ConnectAsync(fireTvClientKey.Value.IpAddress, fireTvClientKey.Value.Port, cancellationToken);
+            connectResult = await adbClient.ConnectAsync(adbTvClientKey.Value.IpAddress, adbTvClientKey.Value.Port, cancellationToken);
         } while (!connectResult.StartsWith("already connected to ", StringComparison.InvariantCultureIgnoreCase));
 
         var deviceData = (await adbClient.GetDevicesAsync(cancellationToken)).FirstOrDefault(x =>
-            x.Serial.Equals($"{fireTvClientKey.Value.IpAddress}:{fireTvClientKey.Value.Port.ToString(NumberFormatInfo.InvariantInfo)}", StringComparison.InvariantCulture));
+            x.Serial.Equals($"{adbTvClientKey.Value.IpAddress}:{adbTvClientKey.Value.Port.ToString(NumberFormatInfo.InvariantInfo)}", StringComparison.InvariantCulture));
         return deviceData is { State: AdvancedSharpAdbClient.Models.DeviceState.Online };
     }
     
@@ -105,11 +107,11 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var fireTvClientKey = await TryGetFireTvClientKey(wsId, deviceId, cancellationToken);
-        if (fireTvClientKey is null)
+        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        if (adbTvClientKey is null)
             return false;
         
-        _fireTvClientFactory.TryRemoveClient(fireTvClientKey.Value);
+        _adbTvClientFactory.TryRemoveClient(adbTvClientKey.Value);
         return true;
     }
     
@@ -118,10 +120,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         CancellationToken cancellationToken)
     {
         var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
-        var ipAddress = msgDataSetupData[FireTv.FireTvConstants.IpAddressKey];
-        var macAddress = msgDataSetupData[FireTv.FireTvConstants.MacAddressKey];
-        var deviceId = msgDataSetupData.GetValueOrDefault(FireTv.FireTvConstants.DeviceIdKey, ipAddress);
-        var port = msgDataSetupData.TryGetValue(FireTv.FireTvConstants.PortKey, out var portValue)
+        var ipAddress = msgDataSetupData[AdbTvConstants.IpAddressKey];
+        var macAddress = msgDataSetupData[AdbTvConstants.MacAddressKey];
+        var deviceId = msgDataSetupData.GetValueOrDefault(AdbTvConstants.DeviceIdKey, ipAddress);
+        var port = msgDataSetupData.TryGetValue(AdbTvConstants.PortKey, out var portValue)
             ? int.Parse(portValue, NumberFormatInfo.InvariantInfo)
             : 5555;
 
@@ -135,7 +137,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 MacAddress = macAddress,
                 Port = port,
                 DeviceId = deviceId,
-                DeviceName = $"{FireTv.FireTvConstants.DeviceName} {ipAddress}",
+                DeviceName = $"{AdbTvConstants.DeviceName} {ipAddress}",
                 EntityId = macAddress
             };
         }
@@ -177,9 +179,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         await _configurationService.UpdateConfigurationAsync(configuration, cancellationToken);
     }
     
-    private DeviceState GetDeviceState(FireTvClientHolder? fireTvClientHolder)
+    private DeviceState GetDeviceState(AdbTvClientHolder? adbTvClientHolder)
     {
-        if (fireTvClientHolder is null)
+        if (adbTvClientHolder is null)
             return DeviceState.Disconnected;
         
         try
@@ -187,7 +189,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(9));
             while (!cancellationTokenSource.IsCancellationRequested)
             {
-                if (fireTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
+                if (adbTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
                     return DeviceState.Connected;
             }
 
@@ -201,5 +203,5 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     }
     
     private record struct RemoveInstruction(string? DeviceId, string[]? EntityIds, string? IpAddress);
-    private sealed record FireTvClientHolder(DeviceClient Client, in FireTvClientKey ClientKey);
+    private sealed record AdbTvClientHolder(DeviceClient Client, in AdbTvClientKey ClientKey);
 }

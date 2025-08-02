@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Remove old unfoldedcircle-firetv.tar.gz if it exists
-rm -f ./unfoldedcircle-firetv.tar.gz
+# Remove old unfoldedcircle-adbtv.tar.gz if it exists
+rm -f ./unfoldedcircle-adbtv.tar.gz
 
 # Remove old publish directory if it exists
 rm -rf ./publish
@@ -26,9 +26,6 @@ mkdir -p ./driverdir/bin ./driverdir/config ./driverdir/data
 # Copy driver.json to the root of the driver directory
 cp ./driver.json ./driverdir/
 
-# Copy icon to root of the driver directory
-cp ../firetv.png ./driverdir/
-
 # Copy appsettings*.json to the bin directory
 cp ./appsettings*.json ./driverdir/bin/
 
@@ -43,7 +40,7 @@ mv adb driverdir/bin/
 
 # Package the driver directory into a tarball
 cd ./driverdir || exit
-tar -czvf ../../unfoldedcircle-firetv.tar.gz ./*
+tar -czvf ../../unfoldedcircle-adbtv.tar.gz ./*
 
 # Remove the output directory
 rm -rf ../../publish

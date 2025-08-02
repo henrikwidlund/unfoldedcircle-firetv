@@ -2,9 +2,9 @@ using System.Collections.Frozen;
 
 using UnfoldedCircle.Models.Events;
 
-namespace UnfoldedCircle.Server.FireTv;
+namespace UnfoldedCircle.Server.AdbTv;
 
-public static class FireTvEntitySettings
+public static class AdbTvEntitySettings
 {
     public static readonly FrozenSet<RemoteFeature> RemoteFeatures = new[]
     {

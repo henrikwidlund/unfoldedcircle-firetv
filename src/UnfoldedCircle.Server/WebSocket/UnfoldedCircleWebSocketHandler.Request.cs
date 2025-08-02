@@ -1,21 +1,23 @@
 using System.Collections.Concurrent;
 
-using UnfoldedCircle.FireTV;
+using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Models;
 using UnfoldedCircle.Models.Events;
 using UnfoldedCircle.Models.Shared;
 using UnfoldedCircle.Models.Sync;
+using UnfoldedCircle.Server.AdbTv;
 using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Event;
-using UnfoldedCircle.Server.FireTv;
 using UnfoldedCircle.Server.Response;
+
+using AdbTvConstants = UnfoldedCircle.AdbTv.AdbTvConstants;
 
 namespace UnfoldedCircle.Server.WebSocket;
 
 internal sealed partial class UnfoldedCircleWebSocketHandler
 {
     private static readonly ConcurrentDictionary<string, string> SocketIdEntityIpMap = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<FireTvClientKey, RemoteState> RemoteStates = new();
+    private static readonly ConcurrentDictionary<AdbTvClientKey, RemoteState> RemoteStates = new();
 
     private async Task HandleRequestMessage(
         System.Net.WebSockets.WebSocket socket,
@@ -34,10 +36,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         payload,
                         new DriverVersion
                         {
-                            Name = FireTv.FireTvConstants.DriverName,
+                            Name = AdbTv.AdbTvConstants.DriverName,
                             Version = new DriverVersionInner
                             {
-                                Driver = FireTv.FireTvConstants.DriverVersion
+                                Driver = AdbTv.AdbTvConstants.DriverVersion
                             }
                         }, _unfoldedCircleJsonSerializerContext),
                     wsId,
@@ -59,11 +61,11 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.GetDeviceState:
             {
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetDeviceStateMsg)!;
-                var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetDeviceStateResponsePayload(
-                        GetDeviceState(fireTvClientHolder),
-                        payload.MsgData.DeviceId ?? fireTvClientHolder?.Client.Device.Serial,
+                        GetDeviceState(adbTvClientHolder),
+                        payload.MsgData.DeviceId ?? adbTvClientHolder?.Client.Device.Serial,
                         _unfoldedCircleJsonSerializerContext
                     ),
                     wsId,
@@ -129,8 +131,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.SetupDriverMsg)!;
                 SocketIdEntityIpMap.AddOrUpdate(wsId,
-                    static (_, arg) => arg.MsgData.SetupData[FireTv.FireTvConstants.IpAddressKey],
-                    static (_, _, arg) => arg.MsgData.SetupData[FireTv.FireTvConstants.IpAddressKey], payload);
+                    static (_, arg) => arg.MsgData.SetupData[AdbTv.AdbTvConstants.IpAddressKey],
+                    static (_, _, arg) => arg.MsgData.SetupData[AdbTv.AdbTvConstants.IpAddressKey], payload);
 
                 var entity = await UpdateConfiguration(payload.MsgData.SetupData, cancellationTokenWrapper.ApplicationStopping);
                 if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
@@ -208,11 +210,11 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         CommonReq payload,
         CancellationTokenWrapper cancellationTokenWrapper)
     {
-        var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, entity.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+        var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, entity.DeviceId, cancellationTokenWrapper.ApplicationStopping);
 
-        var isConnected = fireTvClientHolder is not null && fireTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online;
-        if (fireTvClientHolder is not null)
-            _logger.LogInformation("Setup of Fire TV: {FireTv}", fireTvClientHolder.Client.Device.ToString());
+        var isConnected = adbTvClientHolder is not null && adbTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online;
+        if (adbTvClientHolder is not null)
+            _logger.LogInformation("Setup of ADB TV: {ADBTv}", adbTvClientHolder.Client.Device.ToString());
 
         await Task.WhenAll(
             SendAsync(socket,
@@ -224,7 +226,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping),
             SendAsync(socket,
-                ResponsePayloadHelpers.CreateConnectEventResponsePayload(GetDeviceState(fireTvClientHolder),
+                ResponsePayloadHelpers.CreateConnectEventResponsePayload(GetDeviceState(adbTvClientHolder),
                     _unfoldedCircleJsonSerializerContext),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping)
@@ -235,19 +237,19 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     {
         ButtonMapping =
         [
-            new DeviceButtonMapping { Button = RemoteButtons.Home, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Home } },
-            new DeviceButtonMapping { Button = RemoteButtons.Back, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Back } },
-            new DeviceButtonMapping { Button = RemoteButtons.DpadDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadDown } },
-            new DeviceButtonMapping { Button = RemoteButtons.DpadUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadUp } },
-            new DeviceButtonMapping { Button = RemoteButtons.DpadLeft, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadLeft } },
-            new DeviceButtonMapping { Button = RemoteButtons.ChannelUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelUp } },
-            new DeviceButtonMapping { Button = RemoteButtons.ChannelDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.ChannelDown } },
-            new DeviceButtonMapping { Button = RemoteButtons.DpadRight, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadRight } },
-            new DeviceButtonMapping { Button = RemoteButtons.DpadMiddle, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.DpadCenter } },
-            new DeviceButtonMapping { Button = RemoteButtons.VolumeUp, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeUp } },
-            new DeviceButtonMapping { Button = RemoteButtons.VolumeDown, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.VolumeDown } },
-            new DeviceButtonMapping { Button = RemoteButtons.Power, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Power } },
-            new DeviceButtonMapping { Button = RemoteButtons.Mute, ShortPress = new EntityCommand { CmdId = FireTV.FireTvConstants.Mute } }
+            new DeviceButtonMapping { Button = RemoteButtons.Home, ShortPress = new EntityCommand { CmdId = AdbTvConstants.Home } },
+            new DeviceButtonMapping { Button = RemoteButtons.Back, ShortPress = new EntityCommand { CmdId = AdbTvConstants.Back } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadDown, ShortPress = new EntityCommand { CmdId = AdbTvConstants.DpadDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadUp, ShortPress = new EntityCommand { CmdId = AdbTvConstants.DpadUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadLeft, ShortPress = new EntityCommand { CmdId = AdbTvConstants.DpadLeft } },
+            new DeviceButtonMapping { Button = RemoteButtons.ChannelUp, ShortPress = new EntityCommand { CmdId = AdbTvConstants.ChannelUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.ChannelDown, ShortPress = new EntityCommand { CmdId = AdbTvConstants.ChannelDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadRight, ShortPress = new EntityCommand { CmdId = AdbTvConstants.DpadRight } },
+            new DeviceButtonMapping { Button = RemoteButtons.DpadMiddle, ShortPress = new EntityCommand { CmdId = AdbTvConstants.DpadCenter } },
+            new DeviceButtonMapping { Button = RemoteButtons.VolumeUp, ShortPress = new EntityCommand { CmdId = AdbTvConstants.VolumeUp } },
+            new DeviceButtonMapping { Button = RemoteButtons.VolumeDown, ShortPress = new EntityCommand { CmdId = AdbTvConstants.VolumeDown } },
+            new DeviceButtonMapping { Button = RemoteButtons.Power, ShortPress = new EntityCommand { CmdId = AdbTvConstants.Power } },
+            new DeviceButtonMapping { Button = RemoteButtons.Mute, ShortPress = new EntityCommand { CmdId = AdbTvConstants.Mute } }
         ],
         SimpleCommands =
         [
@@ -268,7 +270,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             [
                 new UserInterfacePage
                 {
-                    PageId = "uc_firetv_general",
+                    PageId = "uc_adbtv_general",
                     Name = "General",
                     Grid = new Grid { Height = 4, Width = 2 },
                     Items =
@@ -325,7 +327,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 },
                 new UserInterfacePage
                 {
-                    PageId = "uc_firetv_numpad",
+                    PageId = "uc_adbtv_numpad",
                     Name = "Numpad",
                     Grid = new Grid { Height = 4, Width = 3 },
                     Items =
@@ -425,9 +427,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 EntityId = x.EntityId,
                 EntityType = EntityType.Remote,
-                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{FireTv.FireTvConstants.DeviceName} {x.IpAddress}" },
+                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{AdbTv.AdbTvConstants.DeviceName} {x.IpAddress}" },
                 DeviceId = x.DeviceId,
-                Features = FireTvEntitySettings.RemoteFeatures,
+                Features = AdbTvEntitySettings.RemoteFeatures,
                 Options = RemoteOptions
             }).ToArray()
             : [];
@@ -438,16 +440,16 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         {
             Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["en"] = FireTv.FireTvConstants.DriverName
+                ["en"] = AdbTv.AdbTvConstants.DriverName
             },
             Description = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["en"] = FireTv.FireTvConstants.DriverDescription
+                ["en"] = AdbTv.AdbTvConstants.DriverDescription
             },
-            Version = FireTv.FireTvConstants.DriverVersion,
-            DriverId = FireTv.FireTvConstants.DriverId,
-            Developer = new DriverDeveloper { Email = FireTv.FireTvConstants.DriverEmail, Name = FireTv.FireTvConstants.DriverDeveloper, Url = FireTv.FireTvConstants.DriverUrl },
-            ReleaseDate = FireTv.FireTvConstants.DriverReleaseDate,
+            Version = AdbTv.AdbTvConstants.DriverVersion,
+            DriverId = AdbTv.AdbTvConstants.DriverId,
+            Developer = new DriverDeveloper { Email = AdbTv.AdbTvConstants.DriverEmail, Name = AdbTv.AdbTvConstants.DriverDeveloper, Url = AdbTv.AdbTvConstants.DriverUrl },
+            ReleaseDate = AdbTv.AdbTvConstants.DriverReleaseDate,
             SetupDataSchema = new SettingsPage
             {
                 Title = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -476,7 +478,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     },
                     new Setting
                     {
-                        Id = FireTv.FireTvConstants.MacAddressKey,
+                        Id = AdbTv.AdbTvConstants.MacAddressKey,
                         Field = new SettingTypeText
                         {
                             Text = new ValueRegex
@@ -487,12 +489,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         },
                         Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                         {
-                            ["en"] = "Enter the MAC address of the Fire TV"
+                            ["en"] = "Enter the MAC address of the TV"
                         }
                     },
                     new Setting
                     {
-                        Id = FireTv.FireTvConstants.IpAddressKey,
+                        Id = AdbTv.AdbTvConstants.IpAddressKey,
                         Field = new SettingTypeText
                         {
                             Text = new ValueRegex
@@ -503,12 +505,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         },
                         Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                         {
-                            ["en"] = "Enter the IP address of the Fire TV"
+                            ["en"] = "Enter the IP address of the TV"
                         }
                     },
                     new Setting
                     {
-                        Id = FireTv.FireTvConstants.PortKey,
+                        Id = AdbTv.AdbTvConstants.PortKey,
                         Field = new SettingTypeNumber
                             {
                                 Number = new SettingTypeNumberInner
@@ -521,13 +523,13 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                             },
                         Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                         {
-                            ["en"] = "Enter the ADB port of the Fire TV"
+                            ["en"] = "Enter the ADB port of the TV"
                         }
                     }
                 ]
             },
             DeviceDiscovery = false,
-            Icon = "custom:firetv.png"
+            Icon = "custom:adbtv.png"
         };
 
     private const string MacAddressRegex = "^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$";

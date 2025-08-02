@@ -19,9 +19,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 cancellationTokenWrapper.EnsureNonCancelledBroadcastCancellationTokenSource();
                 var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.ConnectEvent)!;
-                var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
 
-                var deviceState = GetDeviceState(fireTvClientHolder);
+                var deviceState = GetDeviceState(adbTvClientHolder);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateConnectEventResponsePayload(deviceState,
                         _unfoldedCircleJsonSerializerContext),
@@ -66,7 +66,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 {
                     _ = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.EnterStandbyEvent)!;
                     await (cancellationTokenWrapper.GetCurrentBroadcastCancellationTokenSource()?.CancelAsync() ?? Task.CompletedTask);
-                    _fireTvClientFactory.RemoveAllClients();
+                    _adbTvClientFactory.RemoveAllClients();
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateConnectEventResponsePayload(DeviceState.Disconnected, _unfoldedCircleJsonSerializerContext),
                         wsId,
@@ -77,8 +77,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 {
                     _ = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.ExitStandbyEvent)!;
                     cancellationTokenWrapper.EnsureNonCancelledBroadcastCancellationTokenSource();
-                    var fireTvClientHolder = await TryGetFireTvClientHolder(wsId, null, cancellationTokenWrapper.ApplicationStopping);
-                    var deviceState = GetDeviceState(fireTvClientHolder);
+                    var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, null, cancellationTokenWrapper.ApplicationStopping);
+                    var deviceState = GetDeviceState(adbTvClientHolder);
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateConnectEventResponsePayload(deviceState,
                             _unfoldedCircleJsonSerializerContext),

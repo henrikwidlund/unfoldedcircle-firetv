@@ -1,6 +1,6 @@
-namespace UnfoldedCircle.FireTV;
+namespace UnfoldedCircle.AdbTv;
 
-public static class FireTvConstants
+public static class AdbTvConstants
 {
     public const string Home = "3";
     public const string Back = "4";

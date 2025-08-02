@@ -1,9 +1,9 @@
 **Copyright notice**
 This template is based on https://github.com/dotnet/runtime/blob/main/CONTRIBUTING.md
 
-# Contribution to `unfoldedcircle-firetv`
+# Contribution to `unfoldedcircle-adbtv`
 
-You can contribute to `unfoldedcircle-firetv` with issues and PRs. Simply filing issues for problems you encounter is a great way to contribute. Contributing implementations is greatly appreciated.
+You can contribute to `unfoldedcircle-adbtv` with issues and PRs. Simply filing issues for problems you encounter is a great way to contribute. Contributing implementations is greatly appreciated.
 
 ## Contribution "Bar"
 
@@ -28,7 +28,7 @@ Please do not:
 - **DON'T** surprise us with big pull requests. Instead, file an issue and start
   a discussion so we can agree on a direction before you invest a large amount
   of time.
-- **DON'T** commit code that you didn't write. If you find code that you think is a good fit to add to `unfoldedcircle-firetv`, file an issue and start a discussion before proceeding.
+- **DON'T** commit code that you didn't write. If you find code that you think is a good fit to add to `unfoldedcircle-adbtv`, file an issue and start a discussion before proceeding.
 - **DON'T** submit PRs that alter licensing related files or headers. If you believe there's a problem with them, file an issue and we'll be happy to discuss it.
 - **DON'T** add new features without filing an issue and discussing with us first.
 
@@ -56,7 +56,7 @@ We use and recommend the following workflow:
 6. Build the repository with your changes.
     - Make sure that the builds are clean.
     - Make sure that the tests are all passing, including your new tests.
-7. Create a pull request (PR) against the `unfoldedcircle-firetv` repository's **main** branch.
+7. Create a pull request (PR) against the `unfoldedcircle-adbtv` repository's **main** branch.
     - State in the description what issue or improvement your change is addressing, type of change and linked issues (if applicable).
     - Check if all the Continuous Integration checks are passing.
 8. Wait for feedback or approval of your changes from the owners.

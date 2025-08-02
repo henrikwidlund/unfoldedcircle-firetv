@@ -5,17 +5,17 @@ using AdvancedSharpAdbClient.DeviceCommands;
 
 using Microsoft.Extensions.Logging;
 
-namespace UnfoldedCircle.FireTV;
+namespace UnfoldedCircle.AdbTv;
 
-public class FireTvClientFactory(ILogger<FireTvClientFactory> logger)
+public class AdbTvClientFactory(ILogger<AdbTvClientFactory> logger)
 {
-    private readonly ILogger<FireTvClientFactory> _logger = logger;
-    private readonly ConcurrentDictionary<FireTvClientKey, DeviceClient> _clients = new();
+    private readonly ILogger<AdbTvClientFactory> _logger = logger;
+    private readonly ConcurrentDictionary<AdbTvClientKey, DeviceClient> _clients = new();
     private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
 
-    public async ValueTask<DeviceClient?> TryGetOrCreateClient(FireTvClientKey fireTvClientKey, CancellationToken cancellationToken)
+    public async ValueTask<DeviceClient?> TryGetOrCreateClient(AdbTvClientKey adbTvClientKey, CancellationToken cancellationToken)
     {
-        if (_clients.TryGetValue(fireTvClientKey, out var client))
+        if (_clients.TryGetValue(adbTvClientKey, out var client))
             return client;
 
         await _semaphoreSlim.WaitAsync(cancellationToken);
@@ -25,18 +25,18 @@ public class FireTvClientFactory(ILogger<FireTvClientFactory> logger)
             string connectResult;
             do
             {
-                connectResult = await adbClient.ConnectAsync(fireTvClientKey.IpAddress, fireTvClientKey.Port, cancellationToken);
+                connectResult = await adbClient.ConnectAsync(adbTvClientKey.IpAddress, adbTvClientKey.Port, cancellationToken);
             } while (!connectResult.StartsWith("already connected to ", StringComparison.InvariantCultureIgnoreCase));
 
             var deviceData = (await adbClient.GetDevicesAsync(cancellationToken)).FirstOrDefault(x =>
-                x.Serial.Equals($"{fireTvClientKey.IpAddress}:{fireTvClientKey.Port}", StringComparison.InvariantCulture));
+                x.Serial.Equals($"{adbTvClientKey.IpAddress}:{adbTvClientKey.Port}", StringComparison.InvariantCulture));
             var deviceClient = deviceData.CreateDeviceClient();
-            _clients[fireTvClientKey] = deviceClient;
+            _clients[adbTvClientKey] = deviceClient;
             return deviceClient;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to create client {ClientKey}", fireTvClientKey);
+            _logger.LogError(e, "Failed to create client {ClientKey}", adbTvClientKey);
             return null;
         }
         finally
@@ -45,15 +45,15 @@ public class FireTvClientFactory(ILogger<FireTvClientFactory> logger)
         }
     }
 
-    public void TryRemoveClient(in FireTvClientKey fireTvClientKey)
+    public void TryRemoveClient(in AdbTvClientKey adbTvClientKey)
     {
         try
         {
-            _clients.TryRemove(fireTvClientKey, out _);
+            _clients.TryRemove(adbTvClientKey, out _);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to dispose client {ClientKey}", fireTvClientKey);
+            _logger.LogError(e, "Failed to remove client {ClientKey}", adbTvClientKey);
             throw;
         }
     }

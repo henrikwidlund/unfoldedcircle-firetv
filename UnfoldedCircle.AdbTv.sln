@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnfoldedCircle.FireTV", "src\UnfoldedCircle.FireTV\UnfoldedCircle.FireTV.csproj", "{5B3BC84E-4BCF-443D-8B84-92550576803C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnfoldedCircle.AdbTv", "src\UnfoldedCircle.AdbTv\UnfoldedCircle.AdbTv.csproj", "{5B3BC84E-4BCF-443D-8B84-92550576803C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{68022D3B-601E-42C5-801D-997E7431DC53}"
 EndProject
