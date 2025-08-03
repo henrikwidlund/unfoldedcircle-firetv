@@ -5,18 +5,15 @@ using System.Text;
 using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Event;
-using UnfoldedCircle.Server.Json;
 using UnfoldedCircle.Server.Response;
 
 namespace UnfoldedCircle.Server.WebSocket;
 
 internal sealed partial class UnfoldedCircleWebSocketHandler(
-    UnfoldedCircleJsonSerializerContext unfoldedCircleJsonSerializerContext,
     IConfigurationService configurationService,
     AdbTvClientFactory adbTvClientFactory,
     ILogger<UnfoldedCircleWebSocketHandler> logger)
 {
-    private readonly UnfoldedCircleJsonSerializerContext _unfoldedCircleJsonSerializerContext = unfoldedCircleJsonSerializerContext;
     private readonly IConfigurationService _configurationService = configurationService;
     private readonly AdbTvClientFactory _adbTvClientFactory = adbTvClientFactory;
     private readonly ILogger<UnfoldedCircleWebSocketHandler> _logger = logger;
@@ -79,7 +76,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler(
         string wsId,
         CancellationTokenWrapper cancellationTokenWrapper) =>
         SendAsync(socket,
-            ResponsePayloadHelpers.CreateAuthResponsePayload(_unfoldedCircleJsonSerializerContext),
+            ResponsePayloadHelpers.CreateAuthResponsePayload(),
             wsId,
             cancellationTokenWrapper.ApplicationStopping);
 

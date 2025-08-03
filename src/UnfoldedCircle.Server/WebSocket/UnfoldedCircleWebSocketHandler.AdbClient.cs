@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 
 using AdvancedSharpAdbClient;
@@ -5,9 +6,8 @@ using AdvancedSharpAdbClient.DeviceCommands;
 
 using UnfoldedCircle.AdbTv;
 using UnfoldedCircle.Models.Shared;
+using UnfoldedCircle.Server.AdbTv;
 using UnfoldedCircle.Server.Configuration;
-
-using AdbTvConstants = UnfoldedCircle.Server.AdbTv.AdbTvConstants;
 
 namespace UnfoldedCircle.Server.WebSocket;
 
@@ -90,12 +90,14 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         if (adbTvClientKey is null)
             return false;
 
+        var startTimeStamp = Stopwatch.GetTimestamp();
         var adbClient = new AdbClient();
         string connectResult;
         do
         {
             connectResult = await adbClient.ConnectAsync(adbTvClientKey.Value.IpAddress, adbTvClientKey.Value.Port, cancellationToken);
-        } while (!connectResult.StartsWith("already connected to ", StringComparison.InvariantCultureIgnoreCase));
+        } while (!connectResult.StartsWith("already connected to ", StringComparison.InvariantCultureIgnoreCase)
+                 && Stopwatch.GetElapsedTime(startTimeStamp).TotalSeconds < 10);
 
         var deviceData = (await adbClient.GetDevicesAsync(cancellationToken)).FirstOrDefault(x =>
             x.Serial.Equals($"{adbTvClientKey.Value.IpAddress}:{adbTvClientKey.Value.Port.ToString(NumberFormatInfo.InvariantInfo)}", StringComparison.InvariantCulture));
@@ -120,10 +122,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         CancellationToken cancellationToken)
     {
         var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
-        var ipAddress = msgDataSetupData[AdbTvConstants.IpAddressKey];
-        var macAddress = msgDataSetupData[AdbTvConstants.MacAddressKey];
-        var deviceId = msgDataSetupData.GetValueOrDefault(AdbTvConstants.DeviceIdKey, ipAddress);
-        var port = msgDataSetupData.TryGetValue(AdbTvConstants.PortKey, out var portValue)
+        var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationToken);
+        var ipAddress = msgDataSetupData[AdbTvServerConstants.IpAddressKey];
+        var macAddress = msgDataSetupData[AdbTvServerConstants.MacAddressKey];
+        var deviceId = msgDataSetupData.GetValueOrDefault(AdbTvServerConstants.DeviceIdKey, macAddress);
+        var deviceName = msgDataSetupData.GetValueOrDefault(AdbTvServerConstants.DeviceNameKey, $"{driverMetadata.Name["en"]} {ipAddress}");
+        var port = msgDataSetupData.TryGetValue(AdbTvServerConstants.PortKey, out var portValue)
             ? int.Parse(portValue, NumberFormatInfo.InvariantInfo)
             : 5555;
 
@@ -137,7 +141,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 MacAddress = macAddress,
                 Port = port,
                 DeviceId = deviceId,
-                DeviceName = $"{AdbTvConstants.DeviceName} {ipAddress}",
+                DeviceName = deviceName,
                 EntityId = macAddress
             };
         }
@@ -148,7 +152,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             entity = entity with
             {
                 IpAddress = ipAddress,
-                Port = port
+                MacAddress = macAddress,
+                Port = port,
+                DeviceName = deviceName
             };
         }
         

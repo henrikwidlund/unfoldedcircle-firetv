@@ -8,6 +8,7 @@ using UnfoldedCircle.Models.Sync;
 using UnfoldedCircle.Server.AdbTv;
 using UnfoldedCircle.Server.Configuration;
 using UnfoldedCircle.Server.Event;
+using UnfoldedCircle.Server.Json;
 using UnfoldedCircle.Server.Response;
 
 using AdbTvConstants = UnfoldedCircle.AdbTv.AdbTvConstants;
@@ -30,18 +31,19 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         {
             case MessageEvent.GetDriverVersion:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.CommonReq)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.CommonReq)!;
+                var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationTokenWrapper.RequestAborted);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateDriverVersionResponsePayload(
                         payload,
                         new DriverVersion
                         {
-                            Name = AdbTv.AdbTvConstants.DriverName,
+                            Name = driverMetadata.Name["en"],
                             Version = new DriverVersionInner
                             {
-                                Driver = AdbTv.AdbTvConstants.DriverVersion
+                                Driver = driverMetadata.Version
                             }
-                        }, _unfoldedCircleJsonSerializerContext),
+                        }),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -49,10 +51,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.GetDriverMetaData:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.CommonReq)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.CommonReq)!;
 
                 await SendAsync(socket,
-                    ResponsePayloadHelpers.CreateDriverMetaDataResponsePayload(payload, CreateDriverMetadata(), _unfoldedCircleJsonSerializerContext),
+                    ResponsePayloadHelpers.CreateDriverMetaDataResponsePayload(payload, await _configurationService.GetDriverMetadataAsync(cancellationTokenWrapper.RequestAborted)),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -60,13 +62,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.GetDeviceState:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetDeviceStateMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetDeviceStateMsg)!;
                 var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetDeviceStateResponsePayload(
                         GetDeviceState(adbTvClientHolder),
-                        payload.MsgData.DeviceId ?? adbTvClientHolder?.Client.Device.Serial,
-                        _unfoldedCircleJsonSerializerContext
+                        payload.MsgData.DeviceId ?? adbTvClientHolder?.Client.Device.Serial
                     ),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
@@ -75,16 +76,16 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.GetAvailableEntities:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetAvailableEntitiesMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetAvailableEntitiesMsg)!;
                 var entities = await GetEntities(wsId, payload.MsgData.Filter?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationTokenWrapper.RequestAborted);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetAvailableEntitiesMsg(payload,
                         new AvailableEntitiesMsgData<RemoteFeature, RemoteOptions>
                         {
                             Filter = payload.MsgData.Filter,
-                            AvailableEntities = GetAvailableEntities(entities)
-                        },
-                        _unfoldedCircleJsonSerializerContext),
+                            AvailableEntities = GetAvailableEntities(driverMetadata, entities)
+                        }),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -92,9 +93,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.SubscribeEvents:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.CommonReq)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.CommonReq)!;
                 await SendAsync(socket,
-                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
+                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -102,11 +103,11 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.UnsubscribeEvents:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.UnsubscribeEventsMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.UnsubscribeEventsMsg)!;
 
                 await RemoveConfiguration(new RemoveInstruction(payload.MsgData?.DeviceId, payload.MsgData?.EntityIds, null), cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
-                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
+                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -114,14 +115,13 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.GetEntityStates:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.GetEntityStatesMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetEntityStatesMsg)!;
                 var entities = await GetEntities(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetEntityStatesResponsePayload(payload,
                         entities is { Count: > 0 }
                             ? entities.Select(static x => new EntityIdDeviceId(x.EntityId, x.DeviceId))
-                            : [],
-                        _unfoldedCircleJsonSerializerContext),
+                            : []),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -129,15 +129,15 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.SetupDriver:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.SetupDriverMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.SetupDriverMsg)!;
                 SocketIdEntityIpMap.AddOrUpdate(wsId,
-                    static (_, arg) => arg.MsgData.SetupData[AdbTv.AdbTvConstants.IpAddressKey],
-                    static (_, _, arg) => arg.MsgData.SetupData[AdbTv.AdbTvConstants.IpAddressKey], payload);
+                    static (_, arg) => arg.MsgData.SetupData[AdbTvServerConstants.IpAddressKey],
+                    static (_, _, arg) => arg.MsgData.SetupData[AdbTvServerConstants.IpAddressKey], payload);
 
                 var entity = await UpdateConfiguration(payload.MsgData.SetupData, cancellationTokenWrapper.ApplicationStopping);
                 if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
                 {
-                    await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(_unfoldedCircleJsonSerializerContext),
+                    await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(),
                         wsId, cancellationTokenWrapper.ApplicationStopping);
                     return;
                 }
@@ -148,7 +148,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.SetupDriverUserData:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.SetDriverUserDataMsg)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.SetDriverUserDataMsg)!;
                 if (SocketIdEntityIpMap.TryGetValue(wsId, out var ipAddress))
                 {
                     var entity = await _configurationService.GetConfigurationItemAsync(ipAddress, cancellationTokenWrapper.RequestAborted);
@@ -161,15 +161,14 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                                 {
                                     Code = "INV_ARGUMENT",
                                     Message = "Could not find specified entity"
-                                },
-                                _unfoldedCircleJsonSerializerContext),
+                                }),
                             wsId,
                             cancellationTokenWrapper.ApplicationStopping);
                         return;
                     }
                     if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
                     {
-                        await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(_unfoldedCircleJsonSerializerContext),
+                        await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(),
                             wsId, cancellationTokenWrapper.ApplicationStopping);
                         return;
                     }
@@ -185,8 +184,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         {
                             Code = "INV_ARGUMENT",
                             Message = "Could not find specified entity"
-                        },
-                        _unfoldedCircleJsonSerializerContext),
+                        }),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
 
@@ -194,7 +192,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             case MessageEvent.EntityCommand:
             {
-                var payload = jsonDocument.Deserialize(_unfoldedCircleJsonSerializerContext.RemoteEntityCommandMsgData)!;
+                var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.RemoteEntityCommandMsgData)!;
                 await HandleEntityCommand(socket, payload, wsId, payload.MsgData.DeviceId, cancellationTokenWrapper);
                 return;
             }
@@ -218,16 +216,15 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
 
         await Task.WhenAll(
             SendAsync(socket,
-                ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
+                ResponsePayloadHelpers.CreateCommonResponsePayload(payload),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping),
             SendAsync(socket,
-                ResponsePayloadHelpers.CreateDeviceSetupChangeResponsePayload(isConnected, _unfoldedCircleJsonSerializerContext),
+                ResponsePayloadHelpers.CreateDeviceSetupChangeResponsePayload(isConnected),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping),
             SendAsync(socket,
-                ResponsePayloadHelpers.CreateConnectEventResponsePayload(GetDeviceState(adbTvClientHolder),
-                    _unfoldedCircleJsonSerializerContext),
+                ResponsePayloadHelpers.CreateConnectEventResponsePayload(GetDeviceState(adbTvClientHolder)),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping)
         );
@@ -421,116 +418,17 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     };
 
     private static AvailableEntity<RemoteFeature, RemoteOptions>[] GetAvailableEntities(
+        DriverMetadata driverMetadata,
         List<UnfoldedCircleConfigurationItem>? entities) =>
         entities is { Count: > 0 }
-            ? entities.Select(static x => new AvailableEntity<RemoteFeature, RemoteOptions>
+            ? entities.Select(x => new AvailableEntity<RemoteFeature, RemoteOptions>
             {
                 EntityId = x.EntityId,
                 EntityType = EntityType.Remote,
-                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{AdbTv.AdbTvConstants.DeviceName} {x.IpAddress}" },
+                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{driverMetadata.Name["en"]} {x.IpAddress}" },
                 DeviceId = x.DeviceId,
                 Features = AdbTvEntitySettings.RemoteFeatures,
                 Options = RemoteOptions
             }).ToArray()
             : [];
-
-    private static DriverMetadata? _driverMetadata;
-    private static DriverMetadata CreateDriverMetadata() =>
-        _driverMetadata ??= new DriverMetadata
-        {
-            Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["en"] = AdbTv.AdbTvConstants.DriverName
-            },
-            Description = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["en"] = AdbTv.AdbTvConstants.DriverDescription
-            },
-            Version = AdbTv.AdbTvConstants.DriverVersion,
-            DriverId = AdbTv.AdbTvConstants.DriverId,
-            Developer = new DriverDeveloper { Email = AdbTv.AdbTvConstants.DriverEmail, Name = AdbTv.AdbTvConstants.DriverDeveloper, Url = AdbTv.AdbTvConstants.DriverUrl },
-            ReleaseDate = AdbTv.AdbTvConstants.DriverReleaseDate,
-            SetupDataSchema = new SettingsPage
-            {
-                Title = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["en"] = "Enter Details"
-                },
-                Settings =
-                [
-                    new Setting
-                    {
-                        Id = "disclaimer",
-                        Field =  new SettingTypeLabel
-                        {
-                            Label = new SettingTypeLabelItem
-                            {
-                                Value = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                                {
-                                    ["en"] = "Note that you must have enabled Developer Settings on your TV."
-                                }
-                            }
-                        },
-                        Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            ["en"] = ""
-                        }
-                    },
-                    new Setting
-                    {
-                        Id = AdbTv.AdbTvConstants.MacAddressKey,
-                        Field = new SettingTypeText
-                        {
-                            Text = new ValueRegex
-                            {
-                                RegEx = MacAddressRegex,
-                                Value = string.Empty
-                            }
-                        },
-                        Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            ["en"] = "Enter the MAC address of the TV"
-                        }
-                    },
-                    new Setting
-                    {
-                        Id = AdbTv.AdbTvConstants.IpAddressKey,
-                        Field = new SettingTypeText
-                        {
-                            Text = new ValueRegex
-                            {
-                                RegEx = Ipv4Or6,
-                                Value = string.Empty
-                            }
-                        },
-                        Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            ["en"] = "Enter the IP address of the TV"
-                        }
-                    },
-                    new Setting
-                    {
-                        Id = AdbTv.AdbTvConstants.PortKey,
-                        Field = new SettingTypeNumber
-                            {
-                                Number = new SettingTypeNumberInner
-                                {
-                                    Value = 5555,
-                                    Min = 1,
-                                    Max = 65535,
-                                    Decimals = 0
-                                }
-                            },
-                        Label = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                        {
-                            ["en"] = "Enter the ADB port of the TV"
-                        }
-                    }
-                ]
-            },
-            DeviceDiscovery = false
-        };
-
-    private const string MacAddressRegex = "^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$";
-    private const string Ipv4Or6 = """^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$""";
 }

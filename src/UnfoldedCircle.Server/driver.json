@@ -5,6 +5,7 @@
   "name": {
     "en": "ADB TV"
   },
+  "icon": "uc:tv",
   "description": {
     "en": "Integration for TVs with ADB"
   },
@@ -29,6 +30,15 @@
         },
         "label": {
           "en": ""
+        }
+      },
+      {
+        "id": "device_name",
+        "field": {
+          "text": { }
+        },
+        "label": {
+          "en": "Enter the name of the TV"
         }
       },
       {
