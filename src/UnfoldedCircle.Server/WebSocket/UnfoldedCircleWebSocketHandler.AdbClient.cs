@@ -13,7 +13,27 @@ namespace UnfoldedCircle.Server.WebSocket;
 
 internal sealed partial class UnfoldedCircleWebSocketHandler
 {
-    private async Task<AdbTvClientKey?> TryGetAdbTvClientKey(
+    private async Task<AdbTvClientKey?> TryGetAdbTvClientKeyByEntityId(
+        string wsId,
+        string entityId,
+        CancellationToken cancellationToken)
+    {
+        var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
+        if (configuration.Entities.Count == 0)
+        {
+            _logger.LogInformation("[{WSId}] WS: No configurations found", wsId);
+            return null;
+        }
+
+        var entity = configuration.Entities.Find(x => string.Equals(x.EntityId, entityId, StringComparison.Ordinal));
+        if (entity is not null)
+            return new AdbTvClientKey(entity.IpAddress, entity.MacAddress, entity.Port);
+
+        _logger.LogInformation("[{WSId}] WS: No configuration found for device ID '{EntityId}'", wsId, entityId);
+        return null;
+    }
+
+    private async Task<AdbTvClientKey?> TryGetAdbTvClientKeyByDeviceId(
         string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
@@ -60,12 +80,34 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         return configuration.Entities;
     }
 
-    private async Task<AdbTvClientHolder?> TryGetAdbTvClientHolder(
+    private async Task<AdbTvClientHolder?> TryGetAdbTvClientHolderByEntityId(
+        string wsId,
+        string entityId,
+        CancellationToken cancellationToken)
+    {
+        var adbTvClientKey = await TryGetAdbTvClientKeyByEntityId(wsId, entityId, cancellationToken);
+        if (adbTvClientKey is null)
+            return null;
+
+        var deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey.Value, cancellationToken);
+        if (deviceClient is null)
+            return null;
+
+        if (deviceClient.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
+            return new AdbTvClientHolder(deviceClient, adbTvClientKey.Value);
+
+        _adbTvClientFactory.TryRemoveClient(adbTvClientKey.Value);
+        deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey.Value, cancellationToken);
+
+        return deviceClient is null ? null : new AdbTvClientHolder(deviceClient, adbTvClientKey.Value);
+    }
+
+    private async Task<AdbTvClientHolder?> TryGetAdbTvClientHolderByDeviceId(
         string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        var adbTvClientKey = await TryGetAdbTvClientKeyByDeviceId(wsId, deviceId, cancellationToken);
         if (adbTvClientKey is null)
             return null;
 
@@ -83,10 +125,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     }
 
     private async Task<bool> CheckClientApproved(string wsId,
-        string? deviceId,
+        string entityId,
         CancellationToken cancellationToken)
     {
-        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        var adbTvClientKey = await TryGetAdbTvClientKeyByEntityId(wsId, entityId, cancellationToken);
         if (adbTvClientKey is null)
             return false;
 
@@ -109,7 +151,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, deviceId, cancellationToken);
+        var adbTvClientKey = await TryGetAdbTvClientKeyByDeviceId(wsId, deviceId, cancellationToken);
         if (adbTvClientKey is null)
             return false;
         
@@ -131,10 +173,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             ? int.Parse(portValue, NumberFormatInfo.InvariantInfo)
             : 5555;
 
-        var entity = configuration.Entities.Find(x => string.Equals(x.DeviceId, deviceId, StringComparison.Ordinal));
+        var entity = configuration.Entities.Find(x => string.Equals(x.EntityId, macAddress, StringComparison.Ordinal));
         if (entity is null)
         {
-            _logger.LogInformation("Adding configuration for device ID '{DeviceId}'", deviceId);
+            _logger.LogInformation("Adding configuration for device ID '{EntityId}'", macAddress);
             entity = new UnfoldedCircleConfigurationItem
             {
                 IpAddress = ipAddress,
@@ -147,7 +189,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         }
         else
         {
-            _logger.LogInformation("Updating configuration for device ID '{DeviceId}'", deviceId);
+            _logger.LogInformation("Updating configuration for device ID '{EntityId}'", macAddress);
             configuration.Entities.Remove(entity);
             entity = entity with
             {
@@ -173,7 +215,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
 
         var entities = configuration.Entities.Where(x => string.Equals(x.DeviceId, removeInstruction.DeviceId, StringComparison.Ordinal)
                                                          || removeInstruction.EntityIds?.Contains(x.EntityId, StringComparer.OrdinalIgnoreCase) is true
-                                                         || x.IpAddress.Equals(removeInstruction.IpAddress, StringComparison.OrdinalIgnoreCase))
+                                                         || x.EntityId.Equals(removeInstruction.MacAddress, StringComparison.OrdinalIgnoreCase))
             .ToArray();
         
         foreach (var entity in entities)
@@ -208,6 +250,6 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         }
     }
     
-    private record struct RemoveInstruction(string? DeviceId, string[]? EntityIds, string? IpAddress);
+    private record struct RemoveInstruction(string? DeviceId, string[]? EntityIds, string? MacAddress);
     private sealed record AdbTvClientHolder(DeviceClient Client, in AdbTvClientKey ClientKey);
 }

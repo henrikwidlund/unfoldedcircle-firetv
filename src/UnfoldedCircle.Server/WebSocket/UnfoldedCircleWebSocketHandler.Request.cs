@@ -63,11 +63,11 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.GetDeviceState:
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetDeviceStateMsg)!;
-                var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var adbTvClientHolder = await TryGetAdbTvClientHolderByDeviceId(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetDeviceStateResponsePayload(
                         GetDeviceState(adbTvClientHolder),
-                        payload.MsgData.DeviceId ?? adbTvClientHolder?.Client.Device.Serial
+                        payload.MsgData.DeviceId
                     ),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
@@ -134,7 +134,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     static (_, _, arg) => arg.MsgData.SetupData[AdbTvServerConstants.MacAddressKey], payload);
 
                 var entity = await UpdateConfiguration(payload.MsgData.SetupData, cancellationTokenWrapper.ApplicationStopping);
-                if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
+                if (!await CheckClientApproved(wsId, entity.EntityId, cancellationTokenWrapper.RequestAborted))
                 {
                     await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(),
                         wsId, cancellationTokenWrapper.ApplicationStopping);
@@ -165,7 +165,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                             cancellationTokenWrapper.ApplicationStopping);
                         return;
                     }
-                    if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
+                    if (!await CheckClientApproved(wsId, entity.EntityId, cancellationTokenWrapper.RequestAborted))
                     {
                         await SendAsync(socket, ResponsePayloadHelpers.CreateDeviceSetupChangeUserInputResponsePayload(),
                             wsId, cancellationTokenWrapper.ApplicationStopping);
@@ -192,7 +192,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.EntityCommand:
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.RemoteEntityCommandMsgData)!;
-                await HandleEntityCommand(socket, payload, wsId, payload.MsgData.DeviceId, cancellationTokenWrapper);
+                await HandleEntityCommand(socket, payload, wsId, payload.MsgData.EntityId, cancellationTokenWrapper);
                 return;
             }
             case MessageEvent.SupportedEntityTypes:
@@ -207,7 +207,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         CommonReq payload,
         CancellationTokenWrapper cancellationTokenWrapper)
     {
-        var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, entity.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+        var adbTvClientHolder = await TryGetAdbTvClientHolderByEntityId(wsId, entity.EntityId, cancellationTokenWrapper.ApplicationStopping);
 
         var isConnected = adbTvClientHolder is not null && adbTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online;
         if (adbTvClientHolder is not null)

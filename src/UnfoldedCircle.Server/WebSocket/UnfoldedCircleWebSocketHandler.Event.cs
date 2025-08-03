@@ -20,7 +20,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 cancellationTokenWrapper.EnsureNonCancelledBroadcastCancellationTokenSource();
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.ConnectEvent)!;
-                var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var adbTvClientHolder = await TryGetAdbTvClientHolderByDeviceId(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
 
                 var deviceState = GetDeviceState(adbTvClientHolder);
                 await SendAsync(socket,
@@ -76,7 +76,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 {
                     _ = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.ExitStandbyEvent)!;
                     cancellationTokenWrapper.EnsureNonCancelledBroadcastCancellationTokenSource();
-                    var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, null, cancellationTokenWrapper.ApplicationStopping);
+                    var adbTvClientHolder = await TryGetAdbTvClientHolderByDeviceId(wsId, null, cancellationTokenWrapper.ApplicationStopping);
                     var deviceState = GetDeviceState(adbTvClientHolder);
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateConnectEventResponsePayload(deviceState),

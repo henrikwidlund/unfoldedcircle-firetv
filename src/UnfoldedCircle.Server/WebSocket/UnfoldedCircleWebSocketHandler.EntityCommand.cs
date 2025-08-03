@@ -17,10 +17,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         System.Net.WebSockets.WebSocket socket,
         RemoteEntityCommandMsgData payload,
         string wsId,
-        string? deviceId,
+        string entityId,
         CancellationTokenWrapper cancellationTokenWrapper)
     {
-        var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, deviceId, cancellationTokenWrapper.ApplicationStopping);
+        var adbTvClientHolder = await TryGetAdbTvClientHolderByEntityId(wsId, entityId, cancellationTokenWrapper.ApplicationStopping);
         if (adbTvClientHolder is null || adbTvClientHolder.Client.Device.State != DeviceState.Online)
         {
             await SendAsync(socket,
@@ -144,7 +144,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         {
             for (var i = 0; i < payload.MsgData.Params.Repeat.Value; i++)
             {
-                logger.LogInformation("Sending command '{Command}' to device {IpAddress} (repeat {Repeat})",
+                logger.LogTrace("Sending command '{Command}' to device {IpAddress} (repeat {Repeat})",
                     command, adbTvClientHolder.ClientKey.IpAddress, i + 1);
 
                 await (isRawCommand ?
@@ -156,7 +156,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         }
         else
         {
-            logger.LogInformation("Sending command '{Command}' to device {IpAddress}",
+            logger.LogTrace("Sending command '{Command}' to device {IpAddress}",
                 command, adbTvClientHolder.ClientKey.IpAddress);
             await (isRawCommand
                 ? adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping)
@@ -182,7 +182,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 for (var i = 0; i < payload.MsgData.Params!.Repeat!.Value; i++)
                 {
-                    logger.LogInformation("Sending command '{Command}' as part of a sequence to device {MacAddress} (repeat {Repeat})",
+                    logger.LogTrace("Sending command '{Command}' as part of a sequence to device {MacAddress} (repeat {Repeat})",
                         command, adbTvClientHolder.ClientKey.MacAddress, i + 1);
                     await (isRawCommand ?
                         adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
@@ -193,7 +193,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             else
             {
-                logger.LogInformation("Sending command '{Command}' as part of a sequence to device {IpAddress}",
+                logger.LogTrace("Sending command '{Command}' as part of a sequence to device {IpAddress}",
                     command, adbTvClientHolder.ClientKey.IpAddress);
                 await (isRawCommand ?
                     adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
