@@ -49,8 +49,14 @@ You can send any `input keyevent` command with the remote entity if it's added t
 A list of commands can be found in the official docs at [Android KeyEvent](https://developer.android.com/reference/android/view/KeyEvent)
 and [here](https://gist.github.com/arjunv/2bbcca9a1a1c127749f8dcb6d36fb0bc). Make sure to only use the digits in the commands.
 
-You can also prefix a command with `RAW:` to send a raw shell command to the TV.
+#### Advanced commands
+You can send any `adb shell` command with the integration. Use the following prefixes to send commands:
+- `RAW:YOUR_COMMAND` - Sends the command as is, without any modifications.
+- `APP:YOUR_COMMAND` - Starts an application by sending `shell monkey --pct-syskeys 0 -p {YOUR_COMMAND} 1`.
+- `ACT:YOUR_COMMAND` - Starts an activity by sending `shell am start -n {YOUR_COMMAND}`.
+- `INP:YOUR_COMMAND` - Switches input by sending `shell am start -a android.intent.action.VIEW -d content://android.media.tv/passthrough/com.mediatek.tvinput%2F.hdmi.HDMIInputService%2FHW{YOUR_COMMAND} -n org.droidtv.playtv/.PlayTvActivity -f 0x10000000`.
 Make sure to not include the `adb shell` part of the command, device IP, ports and similar, as it is already included by the integration.
+Also make sure that you do not have any spaces between the prefix and the command.
 
 ### Development
 
