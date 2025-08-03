@@ -20,11 +20,24 @@
     },
     "settings": [
       {
-        "id": "disclaimer",
+        "id": "disclaimer_1",
         "field": {
           "label": {
             "value": {
               "en": "Note that your TV must be turned on and that Developer Settings are enabled on the TV."
+            }
+          }
+        },
+        "label": {
+          "en": ""
+        }
+      },
+      {
+        "id": "disclaimer_2",
+        "field": {
+          "label": {
+            "value": {
+              "en": "The setup might time out if the ADB connection is not approved within 10 seconds, this is a limitation of the web configurator. Just click Try Again if it happens."
             }
           }
         },
@@ -38,7 +51,7 @@
           "text": { }
         },
         "label": {
-          "en": "Enter the name of the TV"
+          "en": "Enter the name of the TV (optional)"
         }
       },
       {
@@ -50,7 +63,7 @@
           }
         },
         "label": {
-          "en": "Enter the MAC address of the TV"
+          "en": "Enter the MAC address of the TV (mandatory)"
         }
       },
       {
@@ -62,7 +75,7 @@
           }
         },
         "label": {
-          "en": "Enter the IP address of the TV"
+          "en": "Enter the IP address of the TV (mandatory)"
         }
       },
       {
@@ -76,7 +89,7 @@
           }
         },
         "label": {
-          "en": "Enter the ADB port of the TV"
+          "en": "Enter the ADB port of the TV (mandatory)"
         }
       }
     ]
