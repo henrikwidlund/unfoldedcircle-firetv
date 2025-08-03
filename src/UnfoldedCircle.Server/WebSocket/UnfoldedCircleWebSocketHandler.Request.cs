@@ -78,13 +78,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetAvailableEntitiesMsg)!;
                 var entities = await GetEntities(wsId, payload.MsgData.Filter?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
-                var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationTokenWrapper.RequestAborted);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetAvailableEntitiesMsg(payload,
                         new AvailableEntitiesMsgData<RemoteFeature, RemoteOptions>
                         {
                             Filter = payload.MsgData.Filter,
-                            AvailableEntities = GetAvailableEntities(driverMetadata, entities)
+                            AvailableEntities = GetAvailableEntities(entities)
                         }),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
@@ -418,14 +417,13 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     };
 
     private static AvailableEntity<RemoteFeature, RemoteOptions>[] GetAvailableEntities(
-        DriverMetadata driverMetadata,
         List<UnfoldedCircleConfigurationItem>? entities) =>
         entities is { Count: > 0 }
-            ? entities.Select(x => new AvailableEntity<RemoteFeature, RemoteOptions>
+            ? entities.Select(static x => new AvailableEntity<RemoteFeature, RemoteOptions>
             {
                 EntityId = x.EntityId,
                 EntityType = EntityType.Remote,
-                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = $"{driverMetadata.Name["en"]} {x.IpAddress}" },
+                Name = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["en"] = x.DeviceName },
                 DeviceId = x.DeviceId,
                 Features = AdbTvEntitySettings.RemoteFeatures,
                 Options = RemoteOptions
