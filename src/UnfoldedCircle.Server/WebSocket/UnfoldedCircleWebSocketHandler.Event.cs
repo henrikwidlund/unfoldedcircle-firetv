@@ -35,7 +35,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.DisconnectEvent)!;
                 await (cancellationTokenWrapper.GetCurrentBroadcastCancellationTokenSource()?.CancelAsync() ?? Task.CompletedTask);
                 var success = await TryDisconnectAdbClient(wsId, payload.MsgData?.DeviceId, cancellationTokenWrapper.ApplicationStopping);
-                SocketIdEntityIpMap.TryRemove(wsId, out _);
+                SocketIdEntityMacMap.TryRemove(wsId, out _);
                 
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateConnectEventResponsePayload(success ? DeviceState.Disconnected : DeviceState.Error),
@@ -48,10 +48,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 _ = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.AbortDriverSetupEvent)!;
                 await (cancellationTokenWrapper.GetCurrentBroadcastCancellationTokenSource()?.CancelAsync() ?? Task.CompletedTask);
-                if (SocketIdEntityIpMap.TryRemove(wsId, out var ipAddress))
+                if (SocketIdEntityMacMap.TryRemove(wsId, out var macAddress))
                 {
-                    await RemoveConfiguration(new RemoveInstruction(null, null, ipAddress), cancellationTokenWrapper.ApplicationStopping);
-                    _logger.LogInformation("[{WSId}] WS: Removed configuration for {IpAddress}", wsId, ipAddress);
+                    await RemoveConfiguration(new RemoveInstruction(null, null, macAddress), cancellationTokenWrapper.ApplicationStopping);
+                    _logger.LogInformation("[{WSId}] WS: Removed configuration for {IpAddress}", wsId, macAddress);
                 }
                 
                 await SendAsync(socket,

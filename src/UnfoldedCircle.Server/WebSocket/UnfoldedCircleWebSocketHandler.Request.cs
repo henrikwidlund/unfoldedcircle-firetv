@@ -17,7 +17,7 @@ namespace UnfoldedCircle.Server.WebSocket;
 
 internal sealed partial class UnfoldedCircleWebSocketHandler
 {
-    private static readonly ConcurrentDictionary<string, string> SocketIdEntityIpMap = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, string> SocketIdEntityMacMap = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<AdbTvClientKey, RemoteState> RemoteStates = new();
 
     private async Task HandleRequestMessage(
@@ -130,9 +130,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.SetupDriver:
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.SetupDriverMsg)!;
-                SocketIdEntityIpMap.AddOrUpdate(wsId,
-                    static (_, arg) => arg.MsgData.SetupData[AdbTvServerConstants.IpAddressKey],
-                    static (_, _, arg) => arg.MsgData.SetupData[AdbTvServerConstants.IpAddressKey], payload);
+                SocketIdEntityMacMap.AddOrUpdate(wsId,
+                    static (_, arg) => arg.MsgData.SetupData[AdbTvServerConstants.MacAddressKey],
+                    static (_, _, arg) => arg.MsgData.SetupData[AdbTvServerConstants.MacAddressKey], payload);
 
                 var entity = await UpdateConfiguration(payload.MsgData.SetupData, cancellationTokenWrapper.ApplicationStopping);
                 if (!await CheckClientApproved(wsId, entity.DeviceId, cancellationTokenWrapper.RequestAborted))
@@ -149,12 +149,12 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.SetupDriverUserData:
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.SetDriverUserDataMsg)!;
-                if (SocketIdEntityIpMap.TryGetValue(wsId, out var ipAddress))
+                if (SocketIdEntityMacMap.TryGetValue(wsId, out var macAddress))
                 {
-                    var entity = await _configurationService.GetConfigurationItemAsync(ipAddress, cancellationTokenWrapper.RequestAborted);
+                    var entity = await _configurationService.GetConfigurationItemAsync(macAddress, cancellationTokenWrapper.RequestAborted);
                     if (entity is null)
                     {
-                        _logger.LogError("Could not find configuration item with id: {EntityId}", ipAddress);
+                        _logger.LogError("Could not find configuration item with id: {EntityId}", macAddress);
                         await SendAsync(socket,
                             ResponsePayloadHelpers.CreateValidationErrorResponsePayload(payload,
                                 new ValidationError

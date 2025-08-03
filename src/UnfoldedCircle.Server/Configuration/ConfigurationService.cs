@@ -15,7 +15,7 @@ internal sealed class ConfigurationService(IConfiguration configuration,
     private UnfoldedCircleConfiguration? _unfoldedCircleConfiguration;
     private readonly SemaphoreSlim _unfoldedCircleConfigSemaphore = new(1, 1);
 
-    public async Task<UnfoldedCircleConfiguration> GetConfigurationAsync(CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfiguration> GetConfigurationAsync(CancellationToken cancellationToken)
     {
         if (_unfoldedCircleConfiguration is not null)
             return _unfoldedCircleConfiguration;
@@ -43,11 +43,11 @@ internal sealed class ConfigurationService(IConfiguration configuration,
                 {
                     _logger.LogError(e, "Configuration file '{ConfigurationFilePath}' is corrupted, creating a new configuration",
                         configurationFilePath);
-                    return await CreateNewConfiguration(configurationFilePath, cancellationToken);
+                    return await CreateNewConfiguration(configurationFilePath);
                 }
             }
 
-            return await CreateNewConfiguration(configurationFilePath, cancellationToken);
+            return await CreateNewConfiguration(configurationFilePath);
         }
         finally
         {
@@ -55,13 +55,13 @@ internal sealed class ConfigurationService(IConfiguration configuration,
         }
     }
 
-    public async Task<UnfoldedCircleConfigurationItem?> GetConfigurationItemAsync(string ipaddress, CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfigurationItem?> GetConfigurationItemAsync(string macAddress, CancellationToken cancellationToken)
     {
         var unfoldedCircleConfiguration = await GetConfigurationAsync(cancellationToken);
-        return unfoldedCircleConfiguration.Entities.FirstOrDefault(x => x.IpAddress.Equals(ipaddress, StringComparison.OrdinalIgnoreCase));
+        return unfoldedCircleConfiguration.Entities.FirstOrDefault(x => x.MacAddress.Equals(macAddress, StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task<UnfoldedCircleConfiguration> CreateNewConfiguration(string configurationFilePath, CancellationToken cancellationToken)
+    private async Task<UnfoldedCircleConfiguration> CreateNewConfiguration(string configurationFilePath)
     {
         _unfoldedCircleConfiguration = new UnfoldedCircleConfiguration
         {
@@ -70,20 +70,19 @@ internal sealed class ConfigurationService(IConfiguration configuration,
         await using var configurationFile = File.Create(configurationFilePath);
         await JsonSerializer.SerializeAsync(configurationFile,
             _unfoldedCircleConfiguration,
-            UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration,
-            cancellationToken);
+            UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration);
 
         return _unfoldedCircleConfiguration;
     }
 
-    public async Task<UnfoldedCircleConfiguration> UpdateConfigurationAsync(UnfoldedCircleConfiguration configuration, CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfiguration> UpdateConfigurationAsync(UnfoldedCircleConfiguration configuration, CancellationToken cancellationToken)
     {
         await _unfoldedCircleConfigSemaphore.WaitAsync(cancellationToken);
         
         try
         {
             await using var configurationFileStream = File.Create(ConfigurationFilePath);
-            await JsonSerializer.SerializeAsync(configurationFileStream, configuration, UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration, cancellationToken);
+            await JsonSerializer.SerializeAsync(configurationFileStream, configuration, UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration, CancellationToken.None);
             _unfoldedCircleConfiguration = configuration;
             return _unfoldedCircleConfiguration;
         }
@@ -95,7 +94,7 @@ internal sealed class ConfigurationService(IConfiguration configuration,
 
     private DriverMetadata? _driverMetadata;
 
-    public async ValueTask<DriverMetadata> GetDriverMetadataAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<DriverMetadata> GetDriverMetadataAsync(CancellationToken cancellationToken)
     {
         if (_driverMetadata is not null)
             return _driverMetadata;
