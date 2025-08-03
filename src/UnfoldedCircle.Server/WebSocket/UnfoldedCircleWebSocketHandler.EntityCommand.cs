@@ -29,8 +29,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     {
                         Code = "INV_ARGUMENT",
                         Message = adbTvClientHolder is null ? "Device not found" : "Device not connected"
-                    },
-                    _unfoldedCircleJsonSerializerContext),
+                    }),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping);
             return;
@@ -58,8 +57,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateStateChangedResponsePayload(
                             new RemoteStateChangedEventMessageDataAttributes { State = RemoteStates[adbTvClientHolder.ClientKey] = RemoteState.On },
-                            payload.MsgData.EntityId,
-                            _unfoldedCircleJsonSerializerContext),
+                            payload.MsgData.EntityId),
                         wsId,
                         cancellationTokenWrapper.ApplicationStopping);
                     break;
@@ -68,8 +66,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     await SendAsync(socket,
                         ResponsePayloadHelpers.CreateStateChangedResponsePayload(
                             new RemoteStateChangedEventMessageDataAttributes { State = RemoteStates[adbTvClientHolder.ClientKey] = RemoteState.Off },
-                            payload.MsgData.EntityId,
-                            _unfoldedCircleJsonSerializerContext),
+                            payload.MsgData.EntityId),
                         wsId,
                         cancellationTokenWrapper.ApplicationStopping);
                     break;
@@ -101,7 +98,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             if (success)
             {
                 await SendAsync(socket,
-                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload, _unfoldedCircleJsonSerializerContext),
+                    ResponsePayloadHelpers.CreateCommonResponsePayload(payload),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
             }
@@ -113,8 +110,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                         {
                             Code = "INV_ARGUMENT",
                             Message = "Unknown command"
-                        },
-                        _unfoldedCircleJsonSerializerContext),
+                        }),
                     wsId,
                     cancellationTokenWrapper.ApplicationStopping);
             }
@@ -128,8 +124,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     {
                         Code = "ERROR",
                         Message = "Error while handling command"
-                    },
-                    _unfoldedCircleJsonSerializerContext),
+                    }),
                 wsId,
                 cancellationTokenWrapper.ApplicationStopping);
         }

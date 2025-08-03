@@ -1,42 +1,40 @@
 using Makaretu.Dns;
 
-using UnfoldedCircle.Server.AdbTv;
 using UnfoldedCircle.Server.Configuration;
 
 namespace UnfoldedCircle.Server.BackgroundServices;
 
-public sealed class MDnsBackgroundService : IHostedService, IDisposable
+public sealed class MDnsBackgroundService(IConfiguration configuration, ILoggerFactory loggerFactory, IConfigurationService configurationService)
+    : IHostedService, IDisposable
 {
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly ServiceProfile _serviceProfile;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly ILoggerFactory _loggerFactory = loggerFactory;
+    private readonly IConfigurationService _configurationService = configurationService;
+    private ServiceProfile? _serviceProfile;
     private ServiceDiscovery? _serviceDiscovery;
 
-    public MDnsBackgroundService(IConfiguration configuration, ILoggerFactory loggerFactory)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _loggerFactory = loggerFactory;
+        var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationToken);
         // Get the local hostname
-        _serviceProfile = new ServiceProfile(AdbTvConstants.DriverId,
+        _serviceProfile = new ServiceProfile(driverMetadata.DriverId,
             "_uc-integration._tcp",
-            configuration.GetOrDefault<ushort>("UC_INTEGRATION_HTTP_PORT", 9001))
+            _configuration.GetOrDefault<ushort>("UC_INTEGRATION_HTTP_PORT", 9001))
         {
             HostName = $"{System.Net.Dns.GetHostName().Split('.')[0]}.local"
         };
 
         // Add TXT records
-        _serviceProfile.AddProperty("name", AdbTvConstants.DriverName);
-        _serviceProfile.AddProperty("ver", AdbTvConstants.DriverVersion);
-        _serviceProfile.AddProperty("developer", AdbTvConstants.DriverDeveloper);
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
+        _serviceProfile.AddProperty("name", driverMetadata.Name["en"]);
+        _serviceProfile.AddProperty("ver", driverMetadata.Version);
+        _serviceProfile.AddProperty("developer", driverMetadata.Developer?.Name ?? "N/A");
         _serviceDiscovery = await ServiceDiscovery.CreateInstance(loggerFactory: _loggerFactory, cancellationToken: cancellationToken);
         _serviceDiscovery.Advertise(_serviceProfile);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (_serviceDiscovery is not null)
+        if (_serviceProfile is not null && _serviceDiscovery is not null)
             await _serviceDiscovery.Unadvertise(_serviceProfile);
     }
 

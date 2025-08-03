@@ -11,7 +11,7 @@ internal static class ResponsePayloadHelpers
     const string EventKind = "event";
     
     private static byte[]? _createAuthResponsePayload;
-    internal static byte[] CreateAuthResponsePayload(UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+    internal static byte[] CreateAuthResponsePayload() =>
         _createAuthResponsePayload ??= JsonSerializer.SerializeToUtf8Bytes(new AuthMsg
             {
                 Kind = "resp",
@@ -19,12 +19,11 @@ internal static class ResponsePayloadHelpers
                 Msg = "authentication",
                 Code = 200
             },
-            jsonSerializerContext.AuthMsg);
+            UnfoldedCircleJsonSerializerContext.Instance.AuthMsg);
 
     internal static byte[] CreateDriverVersionResponsePayload(
         CommonReq req,
-        DriverVersion driverVersionResponseData,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        DriverVersion driverVersionResponseData) =>
         JsonSerializer.SerializeToUtf8Bytes(new DriverVersionMsg
             {
                 Kind = "resp",
@@ -33,12 +32,11 @@ internal static class ResponsePayloadHelpers
                 Code = 200,
                 MsgData = driverVersionResponseData
             },
-            jsonSerializerContext.DriverVersionMsg);
+            UnfoldedCircleJsonSerializerContext.Instance.DriverVersionMsg);
 
     internal static byte[] CreateDriverMetaDataResponsePayload(
         CommonReq req,
-        DriverMetadata driverMetadata,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        DriverMetadata driverMetadata) =>
         JsonSerializer.SerializeToUtf8Bytes(new DriverMetadataMsg
             {
                 Kind = "resp",
@@ -47,14 +45,13 @@ internal static class ResponsePayloadHelpers
                 Code = 200,
                 MsgData = driverMetadata
             },
-            jsonSerializerContext.DriverMetadataMsg);
+            UnfoldedCircleJsonSerializerContext.Instance.DriverMetadataMsg);
 
     private const string Device = "DEVICE";
 
     internal static byte[] CreateGetDeviceStateResponsePayload(
         in DeviceState deviceState,
-        string? deviceId,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        string? deviceId) =>
         JsonSerializer.SerializeToUtf8Bytes(new DeviceStateEventMsg
         {
             Kind = EventKind,
@@ -66,12 +63,11 @@ internal static class ResponsePayloadHelpers
                 State = deviceState,
                 DeviceId = deviceId
             }
-        }, jsonSerializerContext.DeviceStateEventMsg);
+        }, UnfoldedCircleJsonSerializerContext.Instance.DeviceStateEventMsg);
 
     internal static byte[] CreateGetAvailableEntitiesMsg<TFeature, TOptions>(
         GetAvailableEntitiesMsg req,
-        AvailableEntitiesMsgData<TFeature, TOptions> availableEntitiesMsgData,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext)
+        AvailableEntitiesMsgData<TFeature, TOptions> availableEntitiesMsgData)
         where TFeature : struct, Enum =>
         JsonSerializer.SerializeToUtf8Bytes(new AvailableEntitiesMsg<TFeature, TOptions>
             {
@@ -81,16 +77,14 @@ internal static class ResponsePayloadHelpers
                 Code = 200,
                 MsgData = availableEntitiesMsgData
             },
-            jsonSerializerContext.AvailableEntitiesMsgRemoteFeatureRemoteOptions);
+            UnfoldedCircleJsonSerializerContext.Instance.AvailableEntitiesMsgRemoteFeatureRemoteOptions);
 
     public static byte[] CreateCommonResponsePayload(
-        CommonReq req,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
-        CreateCommonResponsePayload(req.Id, jsonSerializerContext);
+        CommonReq req) =>
+        CreateCommonResponsePayload(req.Id);
 
     public static byte[] CreateCommonResponsePayload(
-        in uint requestId,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        in uint requestId) =>
         JsonSerializer.SerializeToUtf8Bytes(new CommonResp
             {
                 Code = 200,
@@ -98,12 +92,11 @@ internal static class ResponsePayloadHelpers
                 ReqId = requestId,
                 Msg = "result"
             },
-            jsonSerializerContext.CommonResp);
+            UnfoldedCircleJsonSerializerContext.Instance.CommonResp);
 
     public static byte[] CreateGetEntityStatesResponsePayload(
         CommonReq req,
-        IEnumerable<EntityIdDeviceId> entityIdDeviceIds,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        IEnumerable<EntityIdDeviceId> entityIdDeviceIds) =>
         JsonSerializer.SerializeToUtf8Bytes(new EntityStates<RemoteEntityAttribute>
         {
             Code = 200,
@@ -117,7 +110,7 @@ internal static class ResponsePayloadHelpers
                 Attributes = RemoteEntityAttributes,
                 DeviceId = x.DeviceId
             }).ToArray()
-        }, jsonSerializerContext.EntityStatesRemoteEntityAttribute);
+        }, UnfoldedCircleJsonSerializerContext.Instance.EntityStatesRemoteEntityAttribute);
 
     private static readonly RemoteEntityAttribute[] RemoteEntityAttributes =
     [
@@ -125,8 +118,7 @@ internal static class ResponsePayloadHelpers
     ];
     
     public static byte[] CreateDeviceSetupChangeResponsePayload(
-        in bool isConnected,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        in bool isConnected) =>
         JsonSerializer.SerializeToUtf8Bytes(new DriverSetupChangeEvent
         {
             Kind = EventKind,
@@ -139,10 +131,9 @@ internal static class ResponsePayloadHelpers
                 EventType = DriverSetupChangeEventType.Stop,
                 Error = isConnected ? null : DriverSetupChangeError.NotFound
             }
-        }, jsonSerializerContext.DriverSetupChangeEvent);
+        }, UnfoldedCircleJsonSerializerContext.Instance.DriverSetupChangeEvent);
 
-    public static byte[] CreateDeviceSetupChangeUserInputResponsePayload(
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+    public static byte[] CreateDeviceSetupChangeUserInputResponsePayload() =>
         JsonSerializer.SerializeToUtf8Bytes(new DriverSetupChangeEvent
         {
             Kind = EventKind,
@@ -164,11 +155,10 @@ internal static class ResponsePayloadHelpers
                     }
                 }
             }
-        }, jsonSerializerContext.DriverSetupChangeEvent);
+        }, UnfoldedCircleJsonSerializerContext.Instance.DriverSetupChangeEvent);
 
     public static byte[] CreateConnectEventResponsePayload(
-        in DeviceState deviceState,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext)
+        in DeviceState deviceState)
     {
         return JsonSerializer.SerializeToUtf8Bytes(new ConnectEventMsg
         {
@@ -177,13 +167,12 @@ internal static class ResponsePayloadHelpers
             Cat = Device,
             TimeStamp = DateTime.UtcNow,
             MsgData = new ConnectDeviceStateItem { State = deviceState }
-        }, jsonSerializerContext.ConnectEventMsg);
+        }, UnfoldedCircleJsonSerializerContext.Instance.ConnectEventMsg);
     }
 
     internal static byte[] CreateValidationErrorResponsePayload(
         CommonReq req,
-        ValidationError validationError,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext) =>
+        ValidationError validationError) =>
         JsonSerializer.SerializeToUtf8Bytes(new CommonRespRequired<ValidationError>
         {
             Kind = "resp",
@@ -191,12 +180,11 @@ internal static class ResponsePayloadHelpers
             Msg = "validation_error",
             Code = 400,
             MsgData = validationError
-        }, jsonSerializerContext.CommonRespRequiredValidationError);
+        }, UnfoldedCircleJsonSerializerContext.Instance.CommonRespRequiredValidationError);
 
     internal static byte[] CreateStateChangedResponsePayload(
         RemoteStateChangedEventMessageDataAttributes attributes,
-        string entityId,
-        UnfoldedCircleJsonSerializerContext jsonSerializerContext)
+        string entityId)
         =>
         JsonSerializer.SerializeToUtf8Bytes(new StateChangedEvent<RemoteStateChangedEventMessageDataAttributes>
         {
@@ -210,5 +198,5 @@ internal static class ResponsePayloadHelpers
                 EntityType = EntityType.Remote,
                 Attributes = attributes
             }
-        }, jsonSerializerContext.StateChangedEventRemoteStateChangedEventMessageDataAttributes);
+        }, UnfoldedCircleJsonSerializerContext.Instance.StateChangedEventRemoteStateChangedEventMessageDataAttributes);
 }

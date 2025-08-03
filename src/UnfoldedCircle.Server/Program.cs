@@ -12,18 +12,12 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(builder.Configuration.GetOrDefault("UC_INTEGRATION_HTTP_PORT", 9001));
 });
 
-var unfoldedCircleJsonSerializerContext = new UnfoldedCircleJsonSerializerContext(new JsonSerializerOptions
-{
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-});
-
-builder.Services.AddSingleton(unfoldedCircleJsonSerializerContext);
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 builder.Services.AddSingleton<AdbTvClientFactory>();
 builder.Services.AddMemoryCache();
-builder.Services.ConfigureHttpJsonOptions(options =>
+builder.Services.ConfigureHttpJsonOptions(static options =>
 {
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, unfoldedCircleJsonSerializerContext);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, UnfoldedCircleJsonSerializerContext.Instance);
 });
 
 builder.Services.AddHostedService<MDnsBackgroundService>();

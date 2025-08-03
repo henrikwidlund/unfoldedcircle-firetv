@@ -1,13 +1,13 @@
+using UnfoldedCircle.Models.Sync;
 using UnfoldedCircle.Server.Json;
 
 namespace UnfoldedCircle.Server.Configuration;
 
-internal sealed class ConfigurationService(IConfiguration configuration, UnfoldedCircleJsonSerializerContext jsonSerializerContext,
+internal sealed class ConfigurationService(IConfiguration configuration,
     ILogger<ConfigurationService> logger)
     : IConfigurationService
 {
     private readonly IConfiguration _configuration = configuration;
-    private readonly UnfoldedCircleJsonSerializerContext _jsonSerializerContext = jsonSerializerContext;
     private readonly ILogger<ConfigurationService> _logger = logger;
     private string? _ucConfigHome;
     private string UcConfigHome => _ucConfigHome ??= _configuration["UC_CONFIG_HOME"] ?? string.Empty;
@@ -15,7 +15,7 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
     private UnfoldedCircleConfiguration? _unfoldedCircleConfiguration;
     private readonly SemaphoreSlim _unfoldedCircleConfigSemaphore = new(1, 1);
 
-    public async Task<UnfoldedCircleConfiguration> GetConfigurationAsync(CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfiguration> GetConfigurationAsync(CancellationToken cancellationToken)
     {
         if (_unfoldedCircleConfiguration is not null)
             return _unfoldedCircleConfiguration;
@@ -34,7 +34,7 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
                 {
                     await using var configurationFile = File.Open(configurationFilePath, FileMode.Open);
                     var deserialized = await JsonSerializer.DeserializeAsync(configurationFile,
-                        _jsonSerializerContext.UnfoldedCircleConfiguration,
+                        UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration,
                         cancellationToken);
                     _unfoldedCircleConfiguration = deserialized ?? throw new InvalidOperationException("Failed to deserialize configuration");
                     return _unfoldedCircleConfiguration;
@@ -43,11 +43,11 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
                 {
                     _logger.LogError(e, "Configuration file '{ConfigurationFilePath}' is corrupted, creating a new configuration",
                         configurationFilePath);
-                    return await CreateNewConfiguration(configurationFilePath, cancellationToken);
+                    return await CreateNewConfiguration(configurationFilePath);
                 }
             }
 
-            return await CreateNewConfiguration(configurationFilePath, cancellationToken);
+            return await CreateNewConfiguration(configurationFilePath);
         }
         finally
         {
@@ -55,13 +55,13 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
         }
     }
 
-    public async Task<UnfoldedCircleConfigurationItem?> GetConfigurationItemAsync(string ipaddress, CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfigurationItem?> GetConfigurationItemAsync(string macAddress, CancellationToken cancellationToken)
     {
         var unfoldedCircleConfiguration = await GetConfigurationAsync(cancellationToken);
-        return unfoldedCircleConfiguration.Entities.FirstOrDefault(x => x.IpAddress.Equals(ipaddress, StringComparison.OrdinalIgnoreCase));
+        return unfoldedCircleConfiguration.Entities.FirstOrDefault(x => x.MacAddress.Equals(macAddress, StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task<UnfoldedCircleConfiguration> CreateNewConfiguration(string configurationFilePath, CancellationToken cancellationToken)
+    private async Task<UnfoldedCircleConfiguration> CreateNewConfiguration(string configurationFilePath)
     {
         _unfoldedCircleConfiguration = new UnfoldedCircleConfiguration
         {
@@ -70,20 +70,19 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
         await using var configurationFile = File.Create(configurationFilePath);
         await JsonSerializer.SerializeAsync(configurationFile,
             _unfoldedCircleConfiguration,
-            _jsonSerializerContext.UnfoldedCircleConfiguration,
-            cancellationToken);
+            UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration);
 
         return _unfoldedCircleConfiguration;
     }
 
-    public async Task<UnfoldedCircleConfiguration> UpdateConfigurationAsync(UnfoldedCircleConfiguration configuration, CancellationToken cancellationToken = default)
+    public async Task<UnfoldedCircleConfiguration> UpdateConfigurationAsync(UnfoldedCircleConfiguration configuration, CancellationToken cancellationToken)
     {
         await _unfoldedCircleConfigSemaphore.WaitAsync(cancellationToken);
         
         try
         {
             await using var configurationFileStream = File.Create(ConfigurationFilePath);
-            await JsonSerializer.SerializeAsync(configurationFileStream, configuration, _jsonSerializerContext.UnfoldedCircleConfiguration, cancellationToken);
+            await JsonSerializer.SerializeAsync(configurationFileStream, configuration, UnfoldedCircleJsonSerializerContext.Instance.UnfoldedCircleConfiguration, CancellationToken.None);
             _unfoldedCircleConfiguration = configuration;
             return _unfoldedCircleConfiguration;
         }
@@ -91,5 +90,17 @@ internal sealed class ConfigurationService(IConfiguration configuration, Unfolde
         {
             _unfoldedCircleConfigSemaphore.Release();
         }
+    }
+
+    private DriverMetadata? _driverMetadata;
+
+    public async ValueTask<DriverMetadata> GetDriverMetadataAsync(CancellationToken cancellationToken)
+    {
+        if (_driverMetadata is not null)
+            return _driverMetadata;
+
+        await using var fileStream = File.OpenRead("driver.json");
+        _driverMetadata = await JsonSerializer.DeserializeAsync<DriverMetadata>(fileStream, UnfoldedCircleJsonSerializerContext.Instance.DriverMetadata, cancellationToken);
+        return _driverMetadata ?? throw new InvalidOperationException("Failed to deserialize driver metadata");
     }
 }
