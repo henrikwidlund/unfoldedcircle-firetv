@@ -254,25 +254,16 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
 
         static (string Command, bool IsRawCommand) GetRawCommand(string command)
         {
-            if (command.StartsWith("RAW:", StringComparison.OrdinalIgnoreCase))
+            return command switch
             {
-                return (command[4..], true);
-            }
-
-            if (command.StartsWith("APP:", StringComparison.OrdinalIgnoreCase))
-            {
-                return ($"monkey --pct-syskeys 0 -p {command[4..]} 1", true);
-            }
-            if (command.StartsWith("ACT:", StringComparison.OrdinalIgnoreCase))
-            {
-                return ($"am start -n {command[4..]}", true);
-            }
-            if (command.StartsWith("INP:", StringComparison.OrdinalIgnoreCase))
-            {
-                return ($"am start -a android.intent.action.VIEW -d content://android.media.tv/passthrough/com.mediatek.tvinput%2F.hdmi.HDMIInputService%2FHW{command[4..]} -n org.droidtv.playtv/.PlayTvActivity -f 0x10000000", true);
-            }
-
-            return (command, false);
+                _ when command.StartsWith("RAW:", StringComparison.OrdinalIgnoreCase) => (command[4..], true),
+                _ when command.StartsWith("APP:", StringComparison.OrdinalIgnoreCase) => ($"monkey --pct-syskeys 0 -p {command[4..]} 1", true),
+                _ when command.StartsWith("ACT:", StringComparison.OrdinalIgnoreCase) => ($"am start -n {command[4..]}", true),
+                _ when command.StartsWith("INP:", StringComparison.OrdinalIgnoreCase) => (
+                    $"am start -a android.intent.action.VIEW -d content://android.media.tv/passthrough/com.mediatek.tvinput%2F.hdmi.HDMIInputService%2FHW{command[4..]} -n org.droidtv.playtv/.PlayTvActivity -f 0x10000000",
+                    true),
+                _ => (command, false)
+            };
         }
     }
 }
