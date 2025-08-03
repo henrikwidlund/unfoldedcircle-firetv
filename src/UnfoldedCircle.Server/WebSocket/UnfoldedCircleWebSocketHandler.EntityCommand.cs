@@ -85,10 +85,10 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                     RemoteStates[adbTvClientHolder.ClientKey] = remoteState;
                     break;
                 case "send_cmd":
-                    success = await HandleSendCommand(payload, cancellationTokenWrapper, adbTvClientHolder);
+                    success = await HandleSendCommand(payload, cancellationTokenWrapper, adbTvClientHolder, _logger);
                     break;
                 case "send_cmd_sequence":
-                    success = await HandleSendCommandSequence(payload, cancellationTokenWrapper, adbTvClientHolder);
+                    success = await HandleSendCommandSequence(payload, cancellationTokenWrapper, adbTvClientHolder, _logger);
                     break;
                 default:
                     success = false;
@@ -132,7 +132,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
 
     private static async Task<bool> HandleSendCommand(RemoteEntityCommandMsgData payload,
         CancellationTokenWrapper cancellationTokenWrapper,
-        AdbTvClientHolder adbTvClientHolder)
+        AdbTvClientHolder adbTvClientHolder,
+        ILogger logger)
     {
         (string command, bool isRawCommand) = GetMappedCommand(payload.MsgData.Params?.Command);
         if (string.IsNullOrEmpty(command))
@@ -143,6 +144,9 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         {
             for (var i = 0; i < payload.MsgData.Params.Repeat.Value; i++)
             {
+                logger.LogInformation("Sending command '{Command}' to device {IpAddress} (repeat {Repeat})",
+                    command, adbTvClientHolder.ClientKey.IpAddress, i + 1);
+
                 await (isRawCommand ?
                     adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
                     adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
@@ -151,14 +155,21 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
         }
         else
-            await (isRawCommand ?
-                adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
-                adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+        {
+            logger.LogInformation("Sending command '{Command}' to device {IpAddress}",
+                command, adbTvClientHolder.ClientKey.IpAddress);
+            await (isRawCommand
+                ? adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping)
+                : adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+        }
 
         return true;
     }
 
-    private static async Task<bool> HandleSendCommandSequence(RemoteEntityCommandMsgData payload, CancellationTokenWrapper cancellationTokenWrapper, AdbTvClientHolder adbTvClientHolder)
+    private static async Task<bool> HandleSendCommandSequence(RemoteEntityCommandMsgData payload,
+        CancellationTokenWrapper cancellationTokenWrapper,
+        AdbTvClientHolder adbTvClientHolder,
+        ILogger logger)
     {
         if (payload.MsgData.Params is not { Sequence: { Length: > 0 } sequence })
             return false;
@@ -171,6 +182,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 for (var i = 0; i < payload.MsgData.Params!.Repeat!.Value; i++)
                 {
+                    logger.LogInformation("Sending command '{Command}' as part of a sequence to device {MacAddress} (repeat {Repeat})",
+                        command, adbTvClientHolder.ClientKey.MacAddress, i + 1);
                     await (isRawCommand ?
                         adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
                         adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
@@ -180,6 +193,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             }
             else
             {
+                logger.LogInformation("Sending command '{Command}' as part of a sequence to device {IpAddress}",
+                    command, adbTvClientHolder.ClientKey.IpAddress);
                 await (isRawCommand ?
                     adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
                     adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
