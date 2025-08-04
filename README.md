@@ -7,13 +7,13 @@
 [![Docker](https://img.shields.io/github/actions/workflow/status/henrikwidlund/unfoldedcircle-adbtv/docker.yml?label=Docker&logo=docker)](https://github.com/henrikwidlund/unfoldedcircle-adbtv/actions/workflows/docker.yml)
 
 This repository contains the server code for hosting an integration driver that uses ADB for communication for the Unfolded Circle Remotes.
-It exposes a Remote Entity that can be used to control TVs.
+It exposes a Remote Entity that can be used to control TVs or any other device based on Android with support for ADB.
 
 Tested on Panasonic Z95B
 
 ### Limitations
 
-- The integration relies on ADB (Android Debug Bridge) to communicate with the TV. This is useful for TVs that don't expose other APIs.
+- The integration relies on ADB (Android Debug Bridge) to communicate with the device. This is useful for devices that don't expose other APIs.
 The downside is that this protocol is very slow, as such, you should use Bluetooth for as many commands as possible.
 - Reauthorization of the ADB connection is required when reinstalling/updating the integration when it is hosted
 on the remote. This is because the public and private keys are removed when the integration is uninstalled.
@@ -21,7 +21,7 @@ on the remote. This is because the public and private keys are removed when the 
 This is a limitation of the ADB protocol, where it is not possible to query the power state without turning on the device.
 
 ### Prerequisites
-- IP and MAC address of the TV
+- IP and MAC address of the device you want to control.
 - When installing on the remote, the remote must be on firmware version 2.6.3 or later or the driver will crash
 because it can't start adb.
 
@@ -37,8 +37,8 @@ It's compiled for Linux ARM64 and is meant to be running on the remote.
 | Service      | Port   | Protocol   | Location              |
 |--------------|--------|------------|-----------------------|
 | Server       | 9001*  | HTTP (TCP) | Remote/other computer |
-| ADB          | 5555** | TCP        | TV                    |
-| Wake on Lan  | 9      | UDP        | TV                    |
+| ADB          | 5555** | TCP        | Device to control     |
+| Wake on Lan  | 9      | UDP        | Device to control     |
 
 \* Server port can be adjusted by specifying the desired port with the `UC_INTEGRATION_HTTP_PORT` environment variable.
 \** ADB port can be adjusted during configuration if your device uses a different port.
@@ -70,7 +70,7 @@ Also make sure that you do not have any spaces between the prefix and the comman
 3. Click on `Integrations`
 4. Click on `Add new` and then `Install custom` 
 5. Choose the file in step 1 (`unfoldedcircle-adbtv.tar.gz`)
-6. Make sure that your TV is turned on
+6. Make sure that your device is turned on
 7. Click on the newly installed integration and follow the on-screen instructions
 
 ## Configuration
