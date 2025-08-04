@@ -20,7 +20,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         string entityId,
         CancellationTokenWrapper cancellationTokenWrapper)
     {
-        var adbTvClientHolder = await TryGetAdbTvClientHolderByEntityId(wsId, entityId, cancellationTokenWrapper.ApplicationStopping);
+        var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, entityId, IdentifierType.EntityId, cancellationTokenWrapper.ApplicationStopping);
         if (adbTvClientHolder is null || adbTvClientHolder.Client.Device.State != DeviceState.Online)
         {
             await SendAsync(socket,

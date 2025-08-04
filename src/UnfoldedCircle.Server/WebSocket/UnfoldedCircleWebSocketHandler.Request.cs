@@ -63,7 +63,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             case MessageEvent.GetDeviceState:
             {
                 var payload = jsonDocument.Deserialize(UnfoldedCircleJsonSerializerContext.Instance.GetDeviceStateMsg)!;
-                var adbTvClientHolder = await TryGetAdbTvClientHolderByDeviceId(wsId, payload.MsgData.DeviceId, cancellationTokenWrapper.ApplicationStopping);
+                var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, payload.MsgData.DeviceId, IdentifierType.DeviceId, cancellationTokenWrapper.ApplicationStopping);
                 await SendAsync(socket,
                     ResponsePayloadHelpers.CreateGetDeviceStateResponsePayload(
                         GetDeviceState(adbTvClientHolder),
@@ -207,7 +207,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         CommonReq payload,
         CancellationTokenWrapper cancellationTokenWrapper)
     {
-        var adbTvClientHolder = await TryGetAdbTvClientHolderByEntityId(wsId, entity.EntityId, cancellationTokenWrapper.ApplicationStopping);
+        var adbTvClientHolder = await TryGetAdbTvClientHolder(wsId, entity.EntityId, IdentifierType.EntityId, cancellationTokenWrapper.ApplicationStopping);
 
         var isConnected = adbTvClientHolder is not null && adbTvClientHolder.Client.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online;
         if (adbTvClientHolder is not null)
