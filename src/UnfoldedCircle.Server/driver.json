@@ -1,6 +1,6 @@
 {
   "driver_id": "adbtv-unfolded-circle",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "min_core_api": "0.20.0",
   "name": {
     "en": "ADB TV"
@@ -94,5 +94,5 @@
       }
     ]
   },
-  "release_date": "2025-08-03"
+  "release_date": "2025-08-05"
 }
