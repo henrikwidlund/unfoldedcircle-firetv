@@ -188,7 +188,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
     {
         var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
 
-        var entities = configuration.Entities.Where(x => string.Equals(x.DeviceId, removeInstruction.DeviceId, StringComparison.Ordinal)
+        var entities = configuration.Entities.Where(x => (x.DeviceId != null && string.Equals(x.DeviceId, removeInstruction.DeviceId, StringComparison.Ordinal))
                                                          || removeInstruction.EntityIds?.Contains(x.EntityId, StringComparer.OrdinalIgnoreCase) is true
                                                          || x.EntityId.Equals(removeInstruction.MacAddress, StringComparison.OrdinalIgnoreCase))
             .ToArray();
