@@ -45,6 +45,33 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         return null;
     }
 
+    private async Task<AdbTvClientKey[]?> TryGetAdbTvClientKeys(
+        string wsId,
+        string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        var configuration = await _configurationService.GetConfigurationAsync(cancellationToken);
+        if (configuration.Entities.Count == 0)
+        {
+            _logger.LogInformation("[{WSId}] WS: No configurations found", wsId);
+            return null;
+        }
+
+        if (!string.IsNullOrEmpty(deviceId))
+        {
+            var entity = configuration.Entities.Find(x => string.Equals(x.DeviceId, deviceId, StringComparison.Ordinal));
+            if (entity is not null)
+                return [new AdbTvClientKey(entity.IpAddress, entity.MacAddress, entity.Port)];
+
+            _logger.LogInformation("[{WSId}] WS: No configuration found for device ID '{DeviceId}'", wsId, deviceId);
+            return null;
+        }
+
+        return configuration.Entities
+            .Select(static entity => new AdbTvClientKey(entity.IpAddress, entity.MacAddress, entity.Port))
+            .ToArray();
+    }
+
     private enum IdentifierType
     {
         DeviceId,
@@ -99,6 +126,39 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         return deviceClient is null ? null : new AdbTvClientHolder(deviceClient, adbTvClientKey.Value);
     }
 
+    private async Task<List<AdbTvClientHolder>?> TryGetAdbTvClientHolders(
+        string wsId,
+        string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        var adbClientKeys = await TryGetAdbTvClientKeys(wsId, deviceId, cancellationToken);
+        if (adbClientKeys is not { Length: > 0 })
+            return null;
+
+        var adbClients = new List<AdbTvClientHolder>(adbClientKeys.Length);
+        foreach (var adbTvClientKey in adbClientKeys)
+        {
+            var adbClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey, cancellationToken);
+            if (adbClient is null)
+                return null;
+
+            var deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey, cancellationToken);
+            if (deviceClient is null)
+                return null;
+
+            if (deviceClient.Device.State == AdvancedSharpAdbClient.Models.DeviceState.Online)
+                adbClients.Add(new AdbTvClientHolder(deviceClient, adbTvClientKey));
+
+            _adbTvClientFactory.TryRemoveClient(adbTvClientKey);
+            deviceClient = await _adbTvClientFactory.TryGetOrCreateClient(adbTvClientKey, cancellationToken);
+
+            if (deviceClient is null)
+                continue;
+            adbClients.Add(new AdbTvClientHolder(deviceClient, adbTvClientKey));
+        }
+        return adbClients;
+    }
+
     private async Task<bool> CheckClientApproved(string wsId,
         string entityId,
         CancellationToken cancellationToken)
@@ -120,17 +180,19 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             x.Serial.Equals($"{adbTvClientKey.Value.IpAddress}:{adbTvClientKey.Value.Port.ToString(NumberFormatInfo.InvariantInfo)}", StringComparison.InvariantCulture));
         return deviceData is { State: AdvancedSharpAdbClient.Models.DeviceState.Online };
     }
-    
-    private async Task<bool> TryDisconnectAdbClient(
+
+    private async Task<bool> TryDisconnectAdbClients(
         string wsId,
         string? deviceId,
         CancellationToken cancellationToken)
     {
-        var adbTvClientKey = await TryGetAdbTvClientKey(wsId, IdentifierType.DeviceId, deviceId, cancellationToken);
-        if (adbTvClientKey is null)
+        var adbTvClientKeys = await TryGetAdbTvClientKeys(wsId, deviceId, cancellationToken);
+        if (adbTvClientKeys is not { Length: > 0 })
             return false;
-        
-        _adbTvClientFactory.TryRemoveClient(adbTvClientKey.Value);
+
+        foreach (var adbTvClientKey in adbTvClientKeys)
+            _adbTvClientFactory.TryRemoveClient(adbTvClientKey);
+
         return true;
     }
     
