@@ -204,8 +204,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         var driverMetadata = await _configurationService.GetDriverMetadataAsync(cancellationToken);
         var ipAddress = msgDataSetupData[AdbTvServerConstants.IpAddressKey];
         var macAddress = msgDataSetupData[AdbTvServerConstants.MacAddressKey];
-        var deviceId = msgDataSetupData.GetValueOrDefault(AdbTvServerConstants.DeviceIdKey, macAddress);
-        var deviceName = msgDataSetupData.GetValueOrDefault(AdbTvServerConstants.DeviceNameKey, $"{driverMetadata.Name["en"]} {ipAddress}");
+        var deviceId = msgDataSetupData.GetValueOrNull(AdbTvServerConstants.DeviceIdKey, macAddress);
+        var deviceName = msgDataSetupData.GetValueOrNull(AdbTvServerConstants.DeviceNameKey, $"{driverMetadata.Name["en"]} {ipAddress}");
         var port = msgDataSetupData.TryGetValue(AdbTvServerConstants.PortKey, out var portValue)
             ? int.Parse(portValue, NumberFormatInfo.InvariantInfo)
             : 5555;
