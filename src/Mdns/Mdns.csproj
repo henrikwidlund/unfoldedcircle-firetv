@@ -26,6 +26,7 @@
     </ItemGroup>
     
     <ItemGroup>
+      <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.8" />
         <ProjectReference Include="..\Dns\Dns.csproj" />
     </ItemGroup>
 

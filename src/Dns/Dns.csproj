@@ -28,6 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.8" />
         <EmbeddedResource Include="Resolving/RootHints" />
     </ItemGroup>
 </Project>
