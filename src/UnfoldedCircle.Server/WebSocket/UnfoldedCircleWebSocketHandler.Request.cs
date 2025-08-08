@@ -258,7 +258,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             RemoteCommands.VolumeDown, RemoteCommands.MuteToggle, RemoteCommands.Info,
             RemoteCommands.ChannelUp, RemoteCommands.ChannelDown, RemoteCommands.Settings,
             RemoteCommands.InputHdmi1, RemoteCommands.InputHdmi2, RemoteCommands.InputHdmi3,
-            RemoteCommands.InputHdmi4
+            RemoteCommands.InputHdmi4, ..AppNames.SupportedApps
         ],
         UserInterface = new UserInterface
         {

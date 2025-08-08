@@ -1,5 +1,6 @@
 using System.Net;
 
+using AdvancedSharpAdbClient.DeviceCommands;
 using AdvancedSharpAdbClient.Models;
 
 using UnfoldedCircle.AdbTv;
@@ -135,7 +136,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         AdbTvClientHolder adbTvClientHolder,
         ILogger logger)
     {
-        (string command, bool isRawCommand) = GetMappedCommand(payload.MsgData.Params?.Command);
+        (string command, CommandType commandType) = GetMappedCommand(payload.MsgData.Params?.Command);
         if (string.IsNullOrEmpty(command))
             return false;
 
@@ -147,9 +148,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 logger.LogTrace("Sending command '{Command}' to device {IpAddress} (repeat {Repeat})",
                     command, adbTvClientHolder.ClientKey.IpAddress, i + 1);
 
-                await (isRawCommand ?
-                    adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
-                    adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+                await SendCommand(adbTvClientHolder, commandType, command, logger, cancellationTokenWrapper);
                 if (delay> 0)
                     await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationTokenWrapper.ApplicationStopping);
             }
@@ -158,9 +157,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         {
             logger.LogTrace("Sending command '{Command}' to device {IpAddress}",
                 command, adbTvClientHolder.ClientKey.IpAddress);
-            await (isRawCommand
-                ? adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping)
-                : adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+            await SendCommand(adbTvClientHolder, commandType, command, logger, cancellationTokenWrapper);
         }
 
         return true;
@@ -176,7 +173,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
 
         var delay = payload.MsgData.Params?.Delay ?? 0;
         var shouldRepeat = payload.MsgData.Params?.Repeat.HasValue is true;
-        foreach ((string command, bool isRawCommand) in sequence.Select(GetMappedCommand).Where(static x => !string.IsNullOrEmpty(x.Command)))
+        foreach ((string command, CommandType commandType) in sequence.Select(GetMappedCommand).Where(static x => !string.IsNullOrEmpty(x.Command)))
         {
             if (shouldRepeat)
             {
@@ -184,9 +181,8 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
                 {
                     logger.LogTrace("Sending command '{Command}' as part of a sequence to device {MacAddress} (repeat {Repeat})",
                         command, adbTvClientHolder.ClientKey.MacAddress, i + 1);
-                    await (isRawCommand ?
-                        adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
-                        adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+                    await SendCommand(adbTvClientHolder, commandType, command, logger, cancellationTokenWrapper);
+
                     if (delay> 0)
                         await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationTokenWrapper.ApplicationStopping);
                 }
@@ -195,9 +191,7 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
             {
                 logger.LogTrace("Sending command '{Command}' as part of a sequence to device {IpAddress}",
                     command, adbTvClientHolder.ClientKey.IpAddress);
-                await (isRawCommand ?
-                    adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command, adbTvClientHolder.Client.Device, cancellationTokenWrapper.ApplicationStopping) :
-                    adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping));
+                await SendCommand(adbTvClientHolder, commandType, command, logger, cancellationTokenWrapper);
                 await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationTokenWrapper.ApplicationStopping);
             }
         }
@@ -205,65 +199,99 @@ internal sealed partial class UnfoldedCircleWebSocketHandler
         return true;
     }
 
-    private static (string Command, bool IsRawCommand) GetMappedCommand(string? command)
+    private static async Task SendCommand(AdbTvClientHolder adbTvClientHolder, CommandType commandType, string command, ILogger logger,
+        CancellationTokenWrapper cancellationTokenWrapper)
+    {
+        switch (commandType)
+        {
+            case CommandType.KeyEvent:
+                await adbTvClientHolder.Client.SendKeyEventAsync(command, cancellationTokenWrapper.ApplicationStopping);
+                break;
+            case CommandType.Raw:
+                await adbTvClientHolder.Client.AdbClient.ExecuteRemoteCommandAsync(command,
+                    adbTvClientHolder.Client.Device,
+                    cancellationTokenWrapper.ApplicationStopping);
+                break;
+            case CommandType.App:
+                await adbTvClientHolder.Client.AdbClient.StartAppAsync(adbTvClientHolder.Client.Device,
+                    command,
+                    cancellationTokenWrapper.ApplicationStopping);
+                break;
+            case CommandType.Unknown:
+            default:
+                logger.LogWarning("Skipping unknown command '{Command}'", command);
+                break;
+        }
+    }
+
+    private static (string Command, CommandType CommandType) GetMappedCommand(string? command)
     {
         if (string.IsNullOrEmpty(command))
-            return (string.Empty, false);
+            return (string.Empty, CommandType.Unknown);
 
         return command switch
         {
-            _ when command.Equals(RemoteButtons.On, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Wakeup, false),
-            _ when command.Equals(RemoteButtons.Off, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Sleep, false),
-            _ when command.Equals(RemoteButtons.Toggle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Power, false),
-            _ when command.Equals(RemoteButtons.VolumeUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.VolumeUp, false),
-            _ when command.Equals(RemoteButtons.VolumeDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.VolumeDown, false),
-            _ when command.Equals(RemoteCommands.MuteToggle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Mute, false),
-            _ when command.Equals(RemoteButtons.Mute, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Mute, false),
-            _ when command.Equals(RemoteButtons.ChannelUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.ChannelUp, false),
-            _ when command.Equals(RemoteButtons.ChannelDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.ChannelDown, false),
-            _ when command.Equals(RemoteCommands.CursorUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadUp, false),
-            _ when command.Equals(RemoteButtons.DpadUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadUp, false),
-            _ when command.Equals(RemoteCommands.CursorDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadDown, false),
-            _ when command.Equals(RemoteButtons.DpadDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadDown, false),
-            _ when command.Equals(RemoteCommands.CursorLeft, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadLeft, false),
-            _ when command.Equals(RemoteButtons.DpadLeft, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadLeft, false),
-            _ when command.Equals(RemoteCommands.CursorRight, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadRight, false),
-            _ when command.Equals(RemoteButtons.DpadRight, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadRight, false),
-            _ when command.Equals(RemoteCommands.CursorEnter, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadCenter, false),
-            _ when command.Equals(RemoteButtons.DpadMiddle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadCenter, false),
-            _ when command.Equals(RemoteCommands.Digit0, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key0, false),
-            _ when command.Equals(RemoteCommands.Digit1, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key1, false),
-            _ when command.Equals(RemoteCommands.Digit2, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key2, false),
-            _ when command.Equals(RemoteCommands.Digit3, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key3, false),
-            _ when command.Equals(RemoteCommands.Digit4, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key4, false),
-            _ when command.Equals(RemoteCommands.Digit5, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key5, false),
-            _ when command.Equals(RemoteCommands.Digit6, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key6, false),
-            _ when command.Equals(RemoteCommands.Digit7, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key7, false),
-            _ when command.Equals(RemoteCommands.Digit8, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key8, false),
-            _ when command.Equals(RemoteCommands.Digit9, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key9, false),
-            _ when command.Equals(RemoteButtons.Home, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Home, false),
-            _ when command.Equals(RemoteCommands.Info, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Info, false),
-            _ when command.Equals(RemoteButtons.Back, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Back, false),
-            _ when command.Equals(RemoteCommands.Settings, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Settings, false),
-            _ when command.Equals(RemoteCommands.InputHdmi1, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi1, false),
-            _ when command.Equals(RemoteCommands.InputHdmi2, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi2, false),
-            _ when command.Equals(RemoteCommands.InputHdmi3, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi3, false),
-            _ when command.Equals(RemoteCommands.InputHdmi4, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi4, false),
+            _ when command.Equals(RemoteButtons.On, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Wakeup, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.Off, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Sleep, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.Toggle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Power, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.VolumeUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.VolumeUp, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.VolumeDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.VolumeDown, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.MuteToggle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Mute, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.Mute, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Mute, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.ChannelUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.ChannelUp, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.ChannelDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.ChannelDown, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.CursorUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadUp, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.DpadUp, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadUp, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.CursorDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadDown, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.DpadDown, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadDown, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.CursorLeft, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadLeft, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.DpadLeft, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadLeft, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.CursorRight, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadRight, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.DpadRight, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadRight, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.CursorEnter, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadCenter, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.DpadMiddle, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.DpadCenter, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit0, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key0, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit1, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key1, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit2, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key2, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit3, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key3, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit4, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key4, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit5, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key5, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit6, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key6, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit7, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key7, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit8, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key8, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Digit9, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Key9, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.Home, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Home, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Info, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Info, CommandType.KeyEvent),
+            _ when command.Equals(RemoteButtons.Back, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Back, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.Settings, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Settings, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.InputHdmi1, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi1, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.InputHdmi2, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi2, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.InputHdmi3, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi3, CommandType.KeyEvent),
+            _ when command.Equals(RemoteCommands.InputHdmi4, StringComparison.OrdinalIgnoreCase) => (AdbTvConstants.Hdmi4, CommandType.KeyEvent),
             _ => GetRawCommand(command)
         };
 
-        static (string Command, bool IsRawCommand) GetRawCommand(string command)
+        static (string Command, CommandType CommandType) GetRawCommand(string command)
         {
             return command switch
             {
-                _ when command.StartsWith("RAW:", StringComparison.OrdinalIgnoreCase) => (command[4..], true),
-                _ when command.StartsWith("APP:", StringComparison.OrdinalIgnoreCase) => ($"monkey --pct-syskeys 0 -p {command[4..]} 1", true),
-                _ when command.StartsWith("ACT:", StringComparison.OrdinalIgnoreCase) => ($"am start -n {command[4..]}", true),
+                _ when command.StartsWith("RAW:", StringComparison.OrdinalIgnoreCase) => (command[4..], CommandType.Raw),
+                _ when command.StartsWith("APP:", StringComparison.OrdinalIgnoreCase) => ($"monkey --pct-syskeys 0 -p {command[4..]} 1", CommandType.Raw),
+                _ when command.StartsWith("ACT:", StringComparison.OrdinalIgnoreCase) => ($"am start -n {command[4..]}", CommandType.Raw),
                 _ when command.StartsWith("INP:", StringComparison.OrdinalIgnoreCase) => (
                     $"am start -a android.intent.action.VIEW -d content://android.media.tv/passthrough/com.mediatek.tvinput%2F.hdmi.HDMIInputService%2FHW{command[4..]} -n org.droidtv.playtv/.PlayTvActivity -f 0x10000000",
-                    true),
-                _ => (command, false)
+                    CommandType.Raw),
+                _ when AppNames.AppNamesMap.TryGetValue(command, out var appName) => (appName, CommandType.App),
+                _ => (command, CommandType.Unknown)
             };
         }
+    }
+
+    private enum CommandType
+    {
+        KeyEvent,
+        Raw,
+        App,
+        Unknown
     }
 }
