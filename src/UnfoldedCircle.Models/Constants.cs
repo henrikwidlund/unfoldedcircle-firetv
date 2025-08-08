@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace UnfoldedCircle.Models;
 
 public static class RemoteCommands
@@ -50,4 +52,60 @@ public static class RemoteButtons
     public const string VolumeDown = RemoteCommands.VolumeDown;
     public const string Power = "POWER";
     public const string Mute = "MUTE";
+}
+
+public static class RemoteApps
+{
+    public const string DisneyPlus = "com.disney.disneyplus";
+    public const string Kodi = "org.xbmc.kodi";
+    public const string MagentaTv = "de.telekom.magentatv.firetv";
+    public const string Netflix = "com.netflix.ninja";
+    public const string RtlPlus = "de.cbc.tvnow.firetv";
+    public const string YouTube = "com.amazon.firetv.youtube";
+    public const string Zdf = "com.zdf.android.mediathek";
+}
+
+public static class AppNames
+{
+    private const string AppleTv = "Apple TV+";
+    private const string Ard = "ARD";
+    private const string DisneyPlus = "Disney+";
+    private const string Kodi = "Kodi";
+    private const string MagentaTv = "Magenta TV";
+    private const string Netflix = "Netflix";
+    private const string RtlPlus = "RTL+";
+    private const string YouTube = "YouTube";
+    private const string Zdf = "ZDF";
+
+    public static readonly FrozenSet<string> SupportedApps =
+    [
+        AppleTv,
+        Ard,
+        DisneyPlus,
+        Kodi,
+        MagentaTv,
+        Netflix,
+        RtlPlus,
+        YouTube,
+        Zdf,
+    ];
+
+    public static readonly FrozenDictionary<string, string> AppNamesMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        [AppleTv] = RemoteActivities.AppleTv,
+        [Ard] = RemoteActivities.Ard,
+        [DisneyPlus] = RemoteApps.DisneyPlus,
+        [Kodi] = RemoteApps.Kodi,
+        [MagentaTv] = RemoteApps.MagentaTv,
+        [Netflix] = RemoteApps.Netflix,
+        [RtlPlus] = RemoteApps.RtlPlus,
+        [YouTube] = RemoteApps.YouTube,
+        [Zdf] = RemoteApps.Zdf,
+    }.ToFrozenDictionary();
+}
+
+public static class RemoteActivities
+{
+    public const string AppleTv = "com.apple.atve.amazon.appletv/.MainActivity";
+    public const string Ard = "de.swr.ard.avp.mobile.android.amazon/.TvActivity";
 }
