@@ -53,7 +53,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Henrik.Makaretu.Multicast" Version="0.0.1-pre1" />
+        <PackageReference Include="Henrik.Makaretu.Dns.Multicast" Version="0.0.1-pre4" />
         <PackageReference Include="Meziantou.Analyzer" Version="2.0.211">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
